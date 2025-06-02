@@ -1,36 +1,48 @@
+// src/components/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaMobileAlt, FaListAlt, FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { useAuth } from '../hooks/useAuth';
 
 function Header() {
+  const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Handle click outside to close dropdown
+  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
     }
-
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [dropdownRef]);
 
-  // Toggle dropdown
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
+  // Toggle dropdown open/closed
+  const toggleDropdown = () => setDropdownOpen((prev) => !prev);
+
+  // Generic nav handler
+  const handleNavigation = (path) => {
+    setDropdownOpen(false);
+    navigate(path);
   };
 
-  // Handle navigation
-  const handleNavigation = (path) => {
-    navigate(path);
+  // When "Log Out" is clicked - use window.location for reliable redirect
+  const handleLogout = () => {
     setDropdownOpen(false);
+    logout();
+    // Force page redirect - this will work even if routing gets confused
+    window.location.href = '/login';
   };
+
+  // If user is not defined (not logged in yet), you could return null or a placeholder.
+  // But in a protected layout, user should always exist here.
+  if (!user) return null;
 
   return (
     <header className="header">
@@ -41,7 +53,8 @@ function Header() {
       <div className="user-info" ref={dropdownRef}>
         <div className="user-avatar" onClick={toggleDropdown}>
           <FaUser />
-          <span>John Doe</span>
+          {/* Show the logged‐in user's name */}
+          <span>{user.username}</span>
         </div>
         
         {dropdownOpen && (
@@ -49,8 +62,8 @@ function Header() {
             <div className="dropdown-user-info">
               <FaUser className="dropdown-avatar" />
               <div>
-                <h3>John Doe</h3>
-                <p>john.doe@example.com</p>
+                <h3>{user.username}</h3>
+                <p>{user.email}</p>
               </div>
             </div>
             
@@ -71,8 +84,7 @@ function Header() {
                 <FaCog />
                 <span>Settings</span>
               </li>
-              <li className="dropdown-divider"></li>
-              <li className="dropdown-logout">
+              <li className="dropdown-logout" onClick={handleLogout}>
                 <FaSignOutAlt />
                 <span>Log Out</span>
               </li>

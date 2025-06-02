@@ -1,11 +1,16 @@
 import React from 'react';
+import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
 import { FaHeartbeat, FaComment, FaChartLine, FaStethoscope, FaHospital} from 'react-icons/fa';
 
 function Dashboard() {
+  const { user, loading, login, logout, isAuthenticated } = useAuth();
   return (
     <div>
-      <h1>Hello, User!</h1>
+      {user && isAuthenticated ? 
+      (<h1>Hello, {user.username}!</h1>):
+      (<h1>Hello!</h1>)
+      }
       <p>Welcome back to your AI Health Dashboard</p>
       <p>How are you feeling today? 😊</p>
       
