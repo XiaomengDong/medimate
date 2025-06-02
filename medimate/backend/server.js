@@ -9,11 +9,16 @@ const app = express();
 const PORT = process.env.PORT || 5050;
 
 app.use(cors({
-  origin: 'https://medimate-frontend-p5hx.onrender.com/',
+  origin: 'https://medimate-frontend-p5hx.onrender.com',
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
