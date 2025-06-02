@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // 1) Middleware: parse incoming JSON bodies
 app.use(express.json());
@@ -34,15 +34,15 @@ app.get('/api/users', (req, res) => {
 });
 
 // 5) (Optional) In production, serve React’s build files
-if (process.env.NODE_ENV === 'production') {
-  // Serve any static files from the React app
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
+// if (process.env.NODE_ENV === 'production') {
+//   // Serve any static files from the React app
+//   app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-  // Handle React routing, return all requests to React’s index.html
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
-  });
-}
+//   // Handle React routing, return all requests to React’s index.html
+//   app.get('*', (req, res) => {
+//     res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
+//   });
+// }
 
 // 6) Start the server
 app.listen(PORT, () => {
