@@ -8,9 +8,8 @@ const authenticateToken = require('./middleware/auth.js');
 const app = express();
 const PORT = process.env.PORT || 5050;
 
-// Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://medimate-frontend-p5hx.onrender.com/',
   credentials: true
 }));
 app.use(express.json());
@@ -39,7 +38,7 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use('/{*any}', (req, res) => {
+app.all('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
