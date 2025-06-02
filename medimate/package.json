@@ -1,5 +1,5 @@
 {
-  "name": "express-vercel-deployment",
+  "name": "medimate",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.21.2"
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
   }
 }
