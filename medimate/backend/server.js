@@ -9,7 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 5050;
 
 app.use(cors({
-  origin: 'https://medimate-chi.vercel.app',
+  origin: [
+    'https://medimate-chi.vercel.app',
+    'http://localhost:3000'
+  ],
   credentials: true
 }));
 app.use(express.json());
