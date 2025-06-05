@@ -25,12 +25,14 @@ class User {
   // Find user by username
   static async findByUsername(username) {
     try {
+      console.log('Searching for:', username);
       const query = 'SELECT * FROM users WHERE username = $1';
       
       const result = await pool.query(query, [username]);
       console.log(result.rows[0]);
       return result.rows[0];
     } catch (error) {
+      console.error('Database error:', error);
       throw error;
     }
   }
