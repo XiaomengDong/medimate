@@ -10,6 +10,9 @@ const devicesRoutes = require('./routes/devices.js');
 const hospitalsRoutes = require('./routes/hospitals.js');
 const aiAssistantRoutes = require('./routes/aiAssistant.js');
 
+const AIAssistant = require('./models/AIAssistant.js');
+const assistant = new AIAssistant();
+
 const app = express();
 const PORT = process.env.PORT || 5050;
 
@@ -67,3 +70,5 @@ app.use('/api/health-data', healthDataRoutes);
 app.use('/api/devices', devicesRoutes);
 app.use('/api/hospitals', hospitalsRoutes);
 app.use('/api/ai-assistant', aiAssistantRoutes);
+
+app.set('aiAssistant', assistant);
