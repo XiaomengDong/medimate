@@ -32,6 +32,10 @@ app.get('/api/nearby-hospitals', async (req, res) => {
   if (!lat || !lng) return res.status(400).json({ error: 'lat & lng required' });
 
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const clientKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey || !clientKey) {
+    return res.status(500).json({ error: 'Google Maps API keys not configured.' });
+  }
   const url =
       `https://maps.googleapis.com/maps/api/place/nearbysearch/json
       ?location=${lat},${lng}
@@ -51,9 +55,14 @@ app.get('/api/nearby-hospitals', async (req, res) => {
       lat:        p.geometry.location.lat,
       lng:        p.geometry.location.lng,
       rating:     p.rating || 0,
-      address:    p.vicinity
+      address:    p.vicinity,
+      photo:      p.photos?.[0]?.photo_reference || '',
+      website:    p.website || `https://www.google.com/maps/place/?q=place_id:${p.place_id}`
     }));
-    res.json({ hospitals });
+    res.status(200).json({
+      hospitals,
+      mapsKey: clientKey
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Google Maps API Server Error' });

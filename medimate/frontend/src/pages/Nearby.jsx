@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FaHospital, FaPhone, FaCalendarAlt, FaMapMarkerAlt, FaStar } from 'react-icons/fa';
+import {FaHospital, FaPhone, FaCalendarAlt, FaMapMarkerAlt, FaStar, FaExternalLinkAlt} from 'react-icons/fa';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import {getNearbyHospitals} from "../services/api";
 
 const mapContainerStyle = {
-  width: '100%',
-  height: '400px',
+    width: '100%',
+    height: '500px',
 };
 
 function Nearby() {
@@ -13,6 +13,7 @@ function Nearby() {
     const [hospitals, setHospitals] = useState([]);
     const [coords, setCoords] = useState({ lat: null, lng: null });
     const [loading, setLoading] = useState(true);
+    const [mapsKey, setMapsKey] = useState('');
 
     useEffect(() => {
         if (!navigator.geolocation) {
@@ -26,10 +27,12 @@ function Nearby() {
                 const { latitude, longitude } = position.coords;
                 setCoords({ lat: latitude, lng: longitude });
                 try {
-                    const list = await getNearbyHospitals(latitude, longitude);
-                    setHospitals(list);
+                    const { hospitals, mapsKey } = await getNearbyHospitals(latitude, longitude);
+                    setHospitals(Array.isArray(hospitals) ? hospitals : []);
+                    setMapsKey(mapsKey);
                 } catch (err) {
-                    console.error(err);
+                    console.error('Error fetching hospitals:', err);
+                    setHospitals([]);
                 } finally {
                     setLoading(false);
                 }
@@ -51,8 +54,6 @@ function Nearby() {
         return stars;
     };
 
-    const handleSchedule = (id) => alert(`Scheduling for hospital ID: ${id}`);
-
     if (loading) return <p>Loading nearby hospitals...</p>;
 
     return (
@@ -63,33 +64,31 @@ function Nearby() {
                 <button className={`toggle-button ${viewType==='map'?'active':''}`} onClick={()=>setViewType('map')}>Map View</button>
             </div>
 
-            {viewType === 'list' ? (
-                <div className="hospitals-list">
-                    {hospitals?.hospitals?.length > 0 ?
-                        hospitals.hospitals.map(h => (
-                        <div key={h.id} className="hospital-card">
-                            <FaHospital size={24} />
-                            <div>
-                                <h2>{h.name}</h2>
-                                <p><FaMapMarkerAlt /> {h.address}</p>
-                                <div className="rating">{renderRating(h.rating)} <span>{h.rating}</span></div>
-                                <button className="schedule-button" onClick={()=>handleSchedule(h.id)}><FaCalendarAlt /> Schedule</button>
+            {/* Move LoadScript outside the conditional rendering */}
+            <LoadScript googleMapsApiKey={mapsKey}>
+                {viewType === 'list' ? (
+                    <div className="hospitals-list">
+                        {Array.isArray(hospitals) && hospitals.map(h => (
+                            <div key={h.id} className="hospital-card">
+                                <div>
+                                    <h2>{h.name}</h2>
+                                    <p><FaMapMarkerAlt /> {h.address}</p>
+                                    <div className="rating">{renderRating(h.rating)} <span>{h.rating}</span></div>
+                                    <a href={h.website} target="_blank" rel="noopener noreferrer" className="schedule-button">
+                                        <FaExternalLinkAlt /> Open in Map
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    )): (
-                            <p>No hospitals found nearby.</p>
-                        )
-                    }
-                </div>
-            ) : (
-                <div className="map-view">
-                    <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="map-view">
                         <GoogleMap mapContainerStyle={mapContainerStyle} center={coords} zoom={13}>
-                            {hospitals.hospitals.map(h => <Marker key={h.id} position={{ lat: h.lat, lng: h.lng }} />)}
+                            {hospitals.map(h => <Marker key={h.id} position={{ lat: h.lat, lng: h.lng }} />)}
                         </GoogleMap>
-                    </LoadScript>
-                </div>
-            )}
+                    </div>
+                )}
+            </LoadScript>
         </div>
     );
 }

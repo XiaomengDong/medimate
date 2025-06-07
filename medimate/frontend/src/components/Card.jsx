@@ -15,7 +15,7 @@ function Card({ title, btn, description, icon: Icon, iconColor, page, style }) {
       <div className="card-content">
         {description}
       </div>
-      <div class="card-actions">
+      <div className="card-actions">
         <Link to={page}>
           <button className="btn">{btn}</button>
         </Link>
