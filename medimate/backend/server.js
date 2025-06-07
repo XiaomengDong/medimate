@@ -27,7 +27,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 
 // Get Nearby Hospitals
-app.get('/nearby-hospitals', async (req, res) => {
+app.get('/api/nearby-hospitals', async (req, res) => {
   const { lat, lng } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: 'lat & lng required' });
 
