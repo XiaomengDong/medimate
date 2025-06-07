@@ -90,3 +90,21 @@ export const makeAuthenticatedRequest = async (endpoint, options = {}) => {
   
   return response;
 };
+
+export async function chatWithAI(message, history = []) {
+  const res = await fetch(`${API_BASE_URL}/api/ai-assistant/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, chatHistory: history })
+  });
+  if (!res.ok) throw new Error('Chat API failed');
+  return (await res.json()).reply;
+}
+
+export async function uploadDoc(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(`${API_BASE_URL}/api/ai-assistant/upload`, { method: 'POST', body: fd });
+  if (!res.ok) throw new Error('Upload API failed');
+  return await res.json();          // { fileName, analysis }
+}

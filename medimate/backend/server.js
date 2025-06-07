@@ -47,6 +47,12 @@ app.get('/api/health', (req, res) => {
   res.json({ message: 'Server is running!' });
 });
 
+//
+//app.use('/api/health-data', healthDataRoutes);
+//app.use('/api/devices', devicesRoutes);
+//app.use('/api/hospitals', hospitalsRoutes);
+app.use('/api/ai-assistant', aiAssistantRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -66,9 +72,5 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-app.use('/api/health-data', healthDataRoutes);
-app.use('/api/devices', devicesRoutes);
-app.use('/api/hospitals', hospitalsRoutes);
-app.use('/api/ai-assistant', aiAssistantRoutes);
 
 app.set('aiAssistant', assistant);
