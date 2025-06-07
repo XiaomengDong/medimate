@@ -5,14 +5,6 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth.js');
 const authenticateToken = require('./middleware/auth.js');
 
-const healthDataRoutes = require('./routes/healthData.js');
-const devicesRoutes = require('./routes/devices.js');
-const hospitalsRoutes = require('./routes/hospitals.js');
-const aiAssistantRoutes = require('./routes/aiAssistant.js');
-
-const AIAssistant = require('./models/AIAssistant.js');
-const assistant = new AIAssistant();
-
 const app = express();
 const PORT = process.env.PORT || 5050;
 
@@ -34,6 +26,40 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 
+// Get Nearby Hospitals
+app.get('/nearby-hospitals', async (req, res) => {
+  const { lat, lng } = req.query;
+  if (!lat || !lng) return res.status(400).json({ error: 'lat & lng required' });
+
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const url =
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json
+      ?location=${lat},${lng}
+      &radius=5000
+      &type=hospital
+      &key=${apiKey}`
+          .replace(/\s+/g, '');
+
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    if (data.status !== 'OK') return res.status(502).json({ error: data.status });
+
+    const hospitals = data.results.map(p => ({
+      id:         p.place_id,
+      name:       p.name,
+      lat:        p.geometry.location.lat,
+      lng:        p.geometry.location.lng,
+      rating:     p.rating || 0,
+      address:    p.vicinity
+    }));
+    res.json({ hospitals });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Google Maps API Server Error' });
+  }
+});
+
 // Protected route example
 app.get('/api/profile', authenticateToken, (req, res) => {
   res.json({
@@ -53,10 +79,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Medimate Backend API' });
-});
-
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
@@ -65,10 +87,3 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-app.use('/api/health-data', healthDataRoutes);
-app.use('/api/devices', devicesRoutes);
-app.use('/api/hospitals', hospitalsRoutes);
-app.use('/api/ai-assistant', aiAssistantRoutes);
-
-app.set('aiAssistant', assistant);
