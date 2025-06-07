@@ -90,3 +90,15 @@ export const makeAuthenticatedRequest = async (endpoint, options = {}) => {
   
   return response;
 };
+
+// Get nearby hospitals
+export const getNearbyHospitals = async (lat, lng) => {
+  const response = await fetch(`${API_BASE_URL}/api/nearby-hospitals?lat=${lat}&lng=${lng}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to fetch nearby hospitals');
+  }
+
+  return data || [];
+}
