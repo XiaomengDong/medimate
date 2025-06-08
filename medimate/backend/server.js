@@ -27,6 +27,10 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 
+
+// AI routes
+app.use('/api/ai', aiAssistantRoutes);
+
 // Get Nearby Hospitals
 app.get('/api/nearby-hospitals', async (req, res) => {
   const { lat, lng } = req.query;
@@ -98,5 +102,3 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// AI routes
-app.use('/api/ai', aiAssistantRoutes);

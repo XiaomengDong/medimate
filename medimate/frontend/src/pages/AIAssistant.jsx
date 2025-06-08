@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { FaRobot, FaPaperPlane, FaFile } from 'react-icons/fa';
 import { aiAPI } from '../services/api';
 
@@ -15,7 +16,7 @@ function AIAssistant() {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
+
     // Add user message
     setChatHistory(prev => [...prev, { type: 'user', message: input }]);
     setInput('');
@@ -24,7 +25,7 @@ function AIAssistant() {
     try {
       // Get health context from your backend if needed
       const healthContext = {}; // You can fetch this from your API
-      
+
       // Call AI API
       const aiResponse = await aiAPI.chat(input, healthContext);
       
@@ -78,7 +79,14 @@ function AIAssistant() {
           {chatHistory.map((chat, index) => (
             <div key={index} className={`message ${chat.type}`}>
               {chat.type === 'ai' && <FaRobot className="message-icon" />}
-              <div className="message-content">{chat.message}</div>
+              {/* Use ReactMarkdown to render aiResponse */}
+              <div className="message-content">
+                {chat.type === 'ai' ? (
+                  <ReactMarkdown>{chat.message}</ReactMarkdown>
+                ) : (
+                  chat.message
+                )}
+              </div>
             </div>
           ))}
           {isLoading && (

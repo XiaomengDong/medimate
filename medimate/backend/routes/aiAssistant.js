@@ -18,7 +18,7 @@ router.post('/chat', authenticateToken, async (req, res) => {
     Provide a helpful, professional response:`;
     
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "You are a helpful medical AI assistant." },
         { role: "user", content: prompt }
