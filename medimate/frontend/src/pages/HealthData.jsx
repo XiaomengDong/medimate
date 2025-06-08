@@ -13,11 +13,14 @@ function HealthData() {
     async function load() {
       setLoading(true);
       try {
-        const res = await makeAuthenticatedRequest('/api/health-data');
-        const list = await res.json();
-        setRecords(list);
+        const res  = await makeAuthenticatedRequest('/api/health-data');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);   // 401, 403, 500…
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Response is not an array');
+        setRecords(data);
       } catch (err) {
         setError(err.message || 'Failed to fetch');
+        setRecords([]);
       } finally {
         setLoading(false);
       }
@@ -26,8 +29,9 @@ function HealthData() {
   }, []);
 
   const healthData = useMemo(() => {
+    const list  = Array.isArray(records) ? records : [];
     const group = { heartRate: [], sleepQuality: [], bloodOxygen: [], bloodPressure: [] };
-    records.forEach(r => {
+    list.forEach(r => {
       switch (r.type) {
         case 'heart_rate':      group.heartRate.push(r);      break;
         case 'sleep_quality':   group.sleepQuality.push(r);   break;
