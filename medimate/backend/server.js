@@ -4,15 +4,8 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth.js');
 const authenticateToken = require('./middleware/auth.js');
-
 const healthDataRoutes = require('./routes/healthData.js');
-const devicesRoutes = require('./routes/devices.js');
-const hospitalsRoutes = require('./routes/hospitals.js');
 const aiAssistantRoutes = require('./routes/aiAssistant.js');
-
-const AIAssistant = require('./models/AIAssistant.js');
-const assistant = new AIAssistant();
-
 const app = express();
 const PORT = process.env.PORT || 5050;
 
@@ -60,7 +53,7 @@ app.use((err, req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Medimate Backend API' });
+  res.json({ message: 'MediMate Backend API' });
 });
 
 // 404 handler
@@ -71,6 +64,3 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
-app.set('aiAssistant', assistant);
