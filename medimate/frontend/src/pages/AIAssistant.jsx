@@ -4,7 +4,12 @@ import { FaRobot, FaPaperPlane, FaFile } from 'react-icons/fa';
 
 function AIAssistant() {
   const [input, setInput] = useState('');
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useState([
+    {
+      type: 'system',
+      message: 'Hello! I\'m your AI health assistant. How can I help you today?'
+    }
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error,     setError]     = useState(null);
 

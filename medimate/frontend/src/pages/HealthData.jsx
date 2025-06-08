@@ -1,129 +1,154 @@
-import React, { useState } from 'react';
+// src/pages/HealthData.jsx
+import React, { useState, useEffect, useMemo } from 'react';
 import { FaHeartbeat, FaBed, FaLungs, FaTint } from 'react-icons/fa';
+import { makeAuthenticatedRequest } from '../services/api';
 
 function HealthData() {
-  // State for selected health metric
   const [selectedMetric, setSelectedMetric] = useState('heartRate');
-  
-  // Mock health data
-  const healthData = {
-    heartRate: {
-      current: '75',
-      unit: 'BPM',
-      history: [72, 75, 73, 78, 74, 76, 75],
-      status: 'Normal',
-      recommendation: 'Your heart rate is within the normal range.',
-    },
-    sleepQuality: {
-      current: '85%',
-      unit: '',
-      history: [80, 82, 79, 85, 83, 87, 85],
-      status: 'Good',
-      recommendation: 'Your sleep quality is good. Maintain your current sleep schedule.',
-    },
-    bloodOxygen: {
-      current: '98%',
-      unit: '',
-      history: [97, 98, 98, 97, 98, 99, 98],
-      status: 'Excellent',
-      recommendation: 'Your blood oxygen level is excellent.',
-    },
-    bloodPressure: {
-      current: '120/80',
-      unit: 'mmHg',
-      history: [
-        { systolic: 118, diastolic: 78 },
-        { systolic: 120, diastolic: 80 },
-        { systolic: 122, diastolic: 82 },
-        { systolic: 119, diastolic: 79 },
-        { systolic: 120, diastolic: 80 },
-        { systolic: 121, diastolic: 81 },
-        { systolic: 120, diastolic: 80 },
-      ],
-      status: 'Normal',
-      recommendation: 'Your blood pressure is within the normal range.',
-    },
-  };
-  
+  const [records, setRecords]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await makeAuthenticatedRequest('/api/health-data');
+        const list = await res.json();
+        setRecords(list);
+      } catch (err) {
+        setError(err.message || 'Failed to fetch');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const healthData = useMemo(() => {
+    const group = { heartRate: [], sleepQuality: [], bloodOxygen: [], bloodPressure: [] };
+    records.forEach(r => {
+      switch (r.type) {
+        case 'heart_rate':      group.heartRate.push(r);      break;
+        case 'sleep_quality':   group.sleepQuality.push(r);   break;
+        case 'blood_oxygen':    group.bloodOxygen.push(r);    break;
+        case 'blood_pressure':  group.bloodPressure.push(r);  break;
+        default: break;
+      }
+    });
+
+    const latest = arr => arr.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+    return {
+      heartRate: buildSimpleMetric(group.heartRate, 'BPM', v => `${v}`, 'Normal'),
+      sleepQuality: buildSimpleMetric(group.sleepQuality, '',  v => `${v}%`, 'Good'),
+      bloodOxygen:  buildSimpleMetric(group.bloodOxygen,  '',  v => `${v}%`, 'Excellent'),
+      bloodPressure: buildBloodPressure(group.bloodPressure)
+    };
+  }, [records]);
+
   const metricData = healthData[selectedMetric];
-  
-  const handleMetricChange = (metric) => {
-    setSelectedMetric(metric);
-  };
-  
-  // Get the icon for the selected metric
-  const getIcon = (metric) => {
+
+  if (loading) return <p>Loading…</p>;
+  if (error)   return <p className="text-red-600">{error}</p>;
+
+  const handleMetricChange = metric => setSelectedMetric(metric);
+
+  const getIcon = metric => {
     switch (metric) {
-      case 'heartRate':
-        return <FaHeartbeat />;
-      case 'sleepQuality':
-        return <FaBed />;
-      case 'bloodOxygen':
-        return <FaLungs />;
-      case 'bloodPressure':
-        return <FaTint />;
-      default:
-        return null;
+      case 'heartRate':    return <FaHeartbeat />;
+      case 'sleepQuality': return <FaBed />;
+      case 'bloodOxygen':  return <FaLungs />;
+      case 'bloodPressure':return <FaTint />;
+      default:             return null;
     }
   };
-  
+
   return (
     <div>
       <h1>My Health</h1>
       <p>Detailed health metrics and analysis</p>
-      
+
       <div className="metric-tabs">
-        <button 
-          className={`metric-tab ${selectedMetric === 'heartRate' ? 'active' : ''}`}
-          onClick={() => handleMetricChange('heartRate')}
-        >
-          <FaHeartbeat /> Heart Rate
-        </button>
-        <button 
-          className={`metric-tab ${selectedMetric === 'sleepQuality' ? 'active' : ''}`}
-          onClick={() => handleMetricChange('sleepQuality')}
-        >
-          <FaBed /> Sleep Quality
-        </button>
-        <button 
-          className={`metric-tab ${selectedMetric === 'bloodOxygen' ? 'active' : ''}`}
-          onClick={() => handleMetricChange('bloodOxygen')}
-        >
-          <FaLungs /> Blood Oxygen
-        </button>
-        <button 
-          className={`metric-tab ${selectedMetric === 'bloodPressure' ? 'active' : ''}`}
-          onClick={() => handleMetricChange('bloodPressure')}
-        >
-          <FaTint /> Blood Pressure
-        </button>
+        {['heartRate','sleepQuality','bloodOxygen','bloodPressure'].map(key => (
+          <button
+            key={key}
+            className={`metric-tab ${selectedMetric === key ? 'active' : ''}`}
+            onClick={() => handleMetricChange(key)}
+          >
+            {getIcon(key)}{' '}
+            {key === 'heartRate' ? 'Heart Rate' :
+             key === 'sleepQuality' ? 'Sleep Quality' :
+             key === 'bloodOxygen' ? 'Blood Oxygen' : 'Blood Pressure'}
+          </button>
+        ))}
       </div>
-      
-      <div className="health-card">
-        <div className="metric-header">
-          {getIcon(selectedMetric)}
-          <h2>{selectedMetric === 'heartRate' ? 'Heart Rate' : 
-               selectedMetric === 'sleepQuality' ? 'Sleep Quality' : 
-               selectedMetric === 'bloodOxygen' ? 'Blood Oxygen' : 
-               'Blood Pressure'}</h2>
+
+      {metricData ? (
+        <div className="health-card">
+          <div className="metric-header">
+            {getIcon(selectedMetric)}
+            <h2>
+              {selectedMetric === 'heartRate' ? 'Heart Rate' :
+               selectedMetric === 'sleepQuality' ? 'Sleep Quality' :
+               selectedMetric === 'bloodOxygen' ? 'Blood Oxygen' : 'Blood Pressure'}
+            </h2>
+          </div>
+
+          <div className="metric-value">
+            <span className="current-value">{metricData.current}</span>
+            <span className="unit">{metricData.unit}</span>
+          </div>
+
+          <div className="metric-status">
+            Status:{' '}
+            <span className={`status-${metricData.status.toLowerCase()}`}>
+              {metricData.status}
+            </span>
+          </div>
+
+          <div className="metric-recommendation">
+            <h3>Recommendation:</h3>
+            <p>{metricData.recommendation}</p>
+          </div>
         </div>
-        
-        <div className="metric-value">
-          <span className="current-value">{metricData.current}</span>
-          <span className="unit">{metricData.unit}</span>
-        </div>
-        
-        <div className="metric-status">
-          Status: <span className={`status-${metricData.status.toLowerCase()}`}>{metricData.status}</span>
-        </div>
-        
-        <div className="metric-recommendation">
-          <h3>Recommendation:</h3>
-          <p>{metricData.recommendation}</p>
-        </div>
-      </div>
+      ) : (
+        <p>No data for this metric yet.</p>
+      )}
     </div>
   );
+}
+
+function buildSimpleMetric(arr, unit, fmt, defaultStatus) {
+  if (!arr.length) return null;
+  const latest = arr.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+  return {
+    current: fmt(latest.value),
+    unit,
+    history: arr.map(r => Number(r.value)),
+    status: defaultStatus,
+    recommendation: `Your ${latest.type.replace('_', ' ')} is within the normal range.`
+  };
+}
+
+function buildBloodPressure(arr) {
+  if (!arr.length) return null;
+  const latest = arr.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+  const [sys, dia] = latest.value.split('/').map(Number);
+  const status = (sys < 120 && dia < 80) ? 'Normal' : 'Elevated';
+  return {
+    current: latest.value,
+    unit: 'mmHg',
+    history: arr.map(r => {
+      const [s, d] = r.value.split('/').map(Number);
+      return { systolic: s, diastolic: d };
+    }),
+    status,
+    recommendation:
+      status === 'Normal'
+        ? 'Your blood pressure is within the normal range.'
+        : 'Consider consulting your physician about blood‑pressure management.'
+  };
 }
 
 export default HealthData;

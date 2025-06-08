@@ -48,7 +48,7 @@ app.get('/api/health', (req, res) => {
 });
 
 //
-//app.use('/api/health-data', healthDataRoutes);
+app.use('/api/health-data', healthDataRoutes);
 //app.use('/api/devices', devicesRoutes);
 //app.use('/api/hospitals', hospitalsRoutes);
 app.use('/api/ai-assistant', aiAssistantRoutes);
