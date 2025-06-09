@@ -49,10 +49,10 @@ function Dashboard() {
           icon={FaStethoscope}
           style={{ backgroundColor: '#F4C9C9'}}
           iconColor="#dc3545"
-          title="Remote Consultation" 
-          description="Talk to healthcare professionals and schedule appointments"
-          btn="Consult Now"
-          page="/remote-consult"
+          title="Doctor Appointment"
+          description="Connect to healthcare professionals and schedule appointments"
+          btn="Book Now"
+          page="/doctor-appointment"
         />
 
         <Card 
