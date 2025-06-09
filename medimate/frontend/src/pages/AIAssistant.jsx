@@ -28,7 +28,6 @@ function AIAssistant() {
 
       // Call AI API
       const aiResponse = await aiAPI.chat(input, healthContext);
-      
       setChatHistory(prev => [
         ...prev,
         { type: 'ai', message: aiResponse }
@@ -46,7 +45,7 @@ function AIAssistant() {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     // Add upload notification
     setChatHistory(prev => [
       ...prev,
@@ -119,7 +118,6 @@ function AIAssistant() {
           </button>
         </form>
       </div>
-    </div>
   );
 }
 

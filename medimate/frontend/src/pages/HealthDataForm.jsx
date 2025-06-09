@@ -1,239 +1,230 @@
-import React, { useState } from 'react';
+// src/pages/HealthDataForm.jsx
+import React, { useState, useEffect, useRef } from 'react';
 import { FaSave } from 'react-icons/fa';
+import { makeAuthenticatedRequest } from '../services/api';
 
-function HealthDataForm() {
-  // State for form data
-  const [formData, setFormData] = useState({
-    height: "5'9\"",
-    weight: "154.32lb",
-    gender: "Male",
-    age: "21",
-    familyHistory: {
-      heartDisease: false,
-      diabetes: false,
-      cancer: false,
-      highBloodPressure: false
-    },
-    allergenHistory: {
-      pollen: false,
-      dust: false,
-      food: false,
-      medication: false
-    }
-  });
+const EMPTY_FORM = {
+  height: '',
+  weight: '',
+  gender: '',
+  age: '',
+  familyHistory: {
+    heartDisease: false,
+    diabetes: false,
+    cancer: false,
+    highBloodPressure: false,
+    other: false,
+    otherText: ''
+  },
+  allergenHistory: {
+    pollen: false,
+    dust: false,
+    food: false,
+    medication: false,
+    other: false,
+    otherText: ''
+  }
+};
 
-  // Handle input change
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
+export default function HealthDataForm() {
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [original, setOriginal] = useState(EMPTY_FORM);
+  const [saving, setSaving]     = useState(false);
+  const [error,  setError]      = useState(null);
+  const mounted = useRef(false);
 
-  // Handle checkbox change for family history
-  const handleFamilyHistoryChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData({
-      ...formData,
-      familyHistory: {
-        ...formData.familyHistory,
-        [name]: checked
+  /* ---------- 初次加载：拉档案 ---------- */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await makeAuthenticatedRequest('/api/health-profile');
+        if (res.status === 404) {
+          return;
+        }
+        if (res.ok) {
+          const p = await res.json();
+          // 后端字段 → 前端形状
+          setFormData({
+            height: p.height ?? '',
+            weight: p.weight ?? '',
+            gender: p.gender ?? '',
+            age:    p.age?.toString() ?? '',
+            familyHistory: { ...EMPTY_FORM.familyHistory, ...(p.family_history || {}) },
+            allergenHistory:{ ...EMPTY_FORM.allergenHistory, ...(p.allergen_history||{}) }
+          });
+          setOriginal(p);    // 保存对比基准
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        mounted.current = true;
       }
-    });
-  };
+    })();
+  }, []);
 
-  // Handle checkbox change for allergen history
-  const handleAllergenHistoryChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData({
-      ...formData,
-      allergenHistory: {
-        ...formData.allergenHistory,
-        [name]: checked
-      }
-    });
-  };
+  /* ---------- 字段更新工具 ---------- */
+  const updateField = (name, value) =>
+    setFormData(prev => ({ ...prev, [name]: value }));
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const updateNested = (group, name, value) =>
+    setFormData(prev => ({
+      ...prev,
+      [group]: { ...prev[group], [name]: value }
+    }));
+
+  /* ---------- dirty 计算 ---------- */
+  const dirty =
+    mounted.current &&
+    JSON.stringify(formData) !== JSON.stringify({
+      ...EMPTY_FORM,
+      ...original,
+      familyHistory: { ...EMPTY_FORM.familyHistory, ...(original.family_history || {}) },
+      allergenHistory:{ ...EMPTY_FORM.allergenHistory, ...(original.allergen_history || {}) }
+    });
+
+  /* ---------- 提交 ---------- */
+  const handleSubmit = async e => {
     e.preventDefault();
-    // In a real app, this would save the data to a database
-    alert('Health data saved successfully!');
+    if (!dirty) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        height: formData.height,
+        weight: formData.weight,
+        gender: formData.gender,
+        age:    formData.age ? Number(formData.age) : null,
+        family_history:   formData.familyHistory,
+        allergen_history: formData.allergenHistory
+      };
+      const res = await makeAuthenticatedRequest('/api/health-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setOriginal(payload);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
+  /* ---------- 渲染 ---------- */
   return (
     <div className="health-data-form-container">
       <div className="page-header">
         <h1>Health Data Form</h1>
       </div>
 
+      {error && <div className="text-red-600 mb-2">{error}</div>}
+
       <form onSubmit={handleSubmit}>
+        {/* ===== 基本信息 ===== */}
         <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="height">Height</label>
-            <input
-              type="text"
-              id="height"
-              name="height"
-              value={formData.height}
-              onChange={handleInputChange}
-              className="form-control"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="weight">Weight</label>
-            <input
-              type="text"
-              id="weight"
-              name="weight"
-              value={formData.weight}
-              onChange={handleInputChange}
-              className="form-control"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="gender">Gender</label>
-            <input
-              type="text"
-              id="gender"
-              name="gender"
-              value={formData.gender}
-              onChange={handleInputChange}
-              className="form-control"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="age">Age</label>
-            <input
-              type="text"
-              id="age"
-              name="age"
-              value={formData.age}
-              onChange={handleInputChange}
-              className="form-control"
-            />
-          </div>
+          <Input label="Height"  name="height" value={formData.height}
+                 onChange={e => updateField('height', e.target.value)} />
+          <Input label="Weight"  name="weight" value={formData.weight}
+                 onChange={e => updateField('weight', e.target.value)} />
+          <Input label="Gender"  name="gender" value={formData.gender}
+                 onChange={e => updateField('gender', e.target.value)} />
+          <Input label="Age"     name="age" type="number" value={formData.age}
+                 onChange={e => updateField('age', e.target.value)} />
         </div>
 
-        <div className="form-sections">
-          <div className="form-section">
-            <h2>Family Medical History</h2>
-            <p className="section-note">
-              Note: The family medical history is an important tool in assessing the risk of genetic diseases and health conditions. It helps doctors understand your predisposition to certain diseases, allowing for early detection, prevention, and tailored treatments.
-            </p>
+        {/* ===== Family History ===== */}
+        <Section
+          title="Family Medical History"
+          note="Note: The family medical history is an important tool in assessing the risk of genetic diseases and health conditions. It helps doctors understand your predisposition to certain diseases, allowing for early detection, prevention, and tailored treatments."
+        >
+          {['heartDisease','diabetes','cancer','highBloodPressure'].map(key => (
+            <Checkbox
+              key={key}
+              id={key}
+              label={toLabel(key)}
+              checked={formData.familyHistory[key]}
+              onChange={e => updateNested('familyHistory', key, e.target.checked)}
+            />
+          ))}
+          <Checkbox
+            id="familyOther"
+            label="Other"
+            checked={formData.familyHistory.other}
+            onChange={e => updateNested('familyHistory','other',e.target.checked)}
+          />
+          {formData.familyHistory.other && (
+            <textarea
+              className="form-control mt-2 w-full"
+              placeholder="Describe other conditions"
+              value={formData.familyHistory.otherText}
+              onChange={e => updateNested('familyHistory','otherText',e.target.value)}
+            />
+          )}
+        </Section>
 
-            <div className="checkbox-group">
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="heartDisease"
-                  name="heartDisease"
-                  checked={formData.familyHistory.heartDisease}
-                  onChange={handleFamilyHistoryChange}
-                />
-                <label htmlFor="heartDisease">Heart Disease</label>
-              </div>
+        {/* ===== Allergen History ===== */}
+        <Section
+          title="Allergen History"
+          note="Note: Understanding your allergen history is essential for managing allergic reactions and preventing severe symptoms. It helps identify triggers and allows for appropriate treatment or avoidance strategies."
+        >
+          {['pollen','dust','food','medication'].map(key => (
+            <Checkbox
+              key={key}
+              id={key}
+              label={toLabel(key)}
+              checked={formData.allergenHistory[key]}
+              onChange={e => updateNested('allergenHistory', key, e.target.checked)}
+            />
+          ))}
+          <Checkbox
+            id="allergenOther"
+            label="Other"
+            checked={formData.allergenHistory.other}
+            onChange={e => updateNested('allergenHistory','other',e.target.checked)}
+          />
+          {formData.allergenHistory.other && (
+            <textarea
+              className="form-control mt-2 w-full"
+              placeholder="Describe other allergens"
+              value={formData.allergenHistory.otherText}
+              onChange={e => updateNested('allergenHistory','otherText',e.target.value)}
+            />
+          )}
+        </Section>
 
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="diabetes"
-                  name="diabetes"
-                  checked={formData.familyHistory.diabetes}
-                  onChange={handleFamilyHistoryChange}
-                />
-                <label htmlFor="diabetes">Diabetes</label>
-              </div>
-
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="cancer"
-                  name="cancer"
-                  checked={formData.familyHistory.cancer}
-                  onChange={handleFamilyHistoryChange}
-                />
-                <label htmlFor="cancer">Cancer</label>
-              </div>
-
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="highBloodPressure"
-                  name="highBloodPressure"
-                  checked={formData.familyHistory.highBloodPressure}
-                  onChange={handleFamilyHistoryChange}
-                />
-                <label htmlFor="highBloodPressure">High Blood Pressure</label>
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h2>Allergen History</h2>
-            <p className="section-note">
-              Note: Understanding your allergen history is essential for managing allergic reactions and preventing severe symptoms. It helps identify triggers and allows for appropriate treatment or avoidance strategies.
-            </p>
-
-            <div className="checkbox-group">
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="pollen"
-                  name="pollen"
-                  checked={formData.allergenHistory.pollen}
-                  onChange={handleAllergenHistoryChange}
-                />
-                <label htmlFor="pollen">Pollen</label>
-              </div>
-
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="dust"
-                  name="dust"
-                  checked={formData.allergenHistory.dust}
-                  onChange={handleAllergenHistoryChange}
-                />
-                <label htmlFor="dust">Dust</label>
-              </div>
-
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="food"
-                  name="food"
-                  checked={formData.allergenHistory.food}
-                  onChange={handleAllergenHistoryChange}
-                />
-                <label htmlFor="food">Food</label>
-              </div>
-
-              <div className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="medication"
-                  name="medication"
-                  checked={formData.allergenHistory.medication}
-                  onChange={handleAllergenHistoryChange}
-                />
-                <label htmlFor="medication">Medication</label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" className="save-btn">
+        {/* ===== Save ===== */}
+        <button type="submit" className="save-btn" disabled={!dirty || saving}>
           <FaSave />
-          <span>Save</span>
+          <span>{saving ? 'Saving…' : 'Save'}</span>
         </button>
       </form>
     </div>
   );
 }
 
-export default HealthDataForm;
+/* ========== 辅助子组件 ========== */
+const Input = ({ label, ...rest }) => (
+  <div className="form-group">
+    <label htmlFor={rest.name}>{label}</label>
+    <input {...rest} className="form-control" />
+  </div>
+);
+
+const Checkbox = ({ id, label, ...rest }) => (
+  <div className="checkbox-item">
+    <input type="checkbox" id={id} {...rest} />
+    <label htmlFor={id}>{label}</label>
+  </div>
+);
+
+const Section = ({ title, note, children }) => (
+  <div className="form-section">
+    <h2>{title}</h2>
+    <p className="section-note">{note}</p>
+    <div className="checkbox-group">{children}</div>
+  </div>
+);
+
+const toLabel = str =>
+  str.replace(/([A-Z])/g, ' $1').replace(/^\w/, c => c.toUpperCase());

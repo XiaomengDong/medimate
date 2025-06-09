@@ -3,6 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth.js');
+// const docAppointmentRoutes = require('./routes/docAppointment.js');
+const healthDataRoutes = require('./routes/healthData')
+const healthProfileRoutes = require('./routes/healthProfile.js');
 const docAppointmentRoutes = require('./routes/docAppointment.js');
 const authenticateToken = require('./middleware/auth.js');
 const aiAssistantRoutes = require('./routes/aiAssistant');
@@ -31,9 +34,13 @@ app.use('/api/auth', authRoutes);
 // Doc Appointment
 app.use('/api/doc-appointment', docAppointmentRoutes);
 
+
 // AI routes
 app.use('/api/ai', aiAssistantRoutes);
 
+// Health data
+app.use('/api/health-data', healthDataRoutes);
+app.use('/api/health-profile', healthProfileRoutes);
 
 // Get Nearby Hospitals
 app.get('/api/nearby-hospitals', async (req, res) => {
@@ -78,14 +85,6 @@ app.get('/api/nearby-hospitals', async (req, res) => {
   }
 });
 
-// Protected route example
-app.get('/api/profile', authenticateToken, (req, res) => {
-  res.json({
-    message: 'This is a protected route',
-    user: req.user
-  });
-});
-
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ message: 'Server is running!' });
@@ -105,4 +104,3 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
