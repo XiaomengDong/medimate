@@ -64,7 +64,6 @@ function Nearby() {
                 <button className={`toggle-button ${viewType==='map'?'active':''}`} onClick={()=>setViewType('map')}>Map View</button>
             </div>
 
-            {/* Move LoadScript outside the conditional rendering */}
             <LoadScript googleMapsApiKey={mapsKey}>
                 {viewType === 'list' ? (
                     <div className="hospitals-list">

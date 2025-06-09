@@ -50,7 +50,7 @@
   }
   
   .card-icon {
-    color: var(--primary-color);
+    color: blue;
     height: 40px; 
     display: flex;
     align-items: center;
