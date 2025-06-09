@@ -11,12 +11,10 @@ const openai = new OpenAI(process.env.OPENAI_API_KEY);
 router.post('/chat', authenticateToken, async (req, res) => {
   try {
     const { message, healthContext } = req.body;
-
     const prompt = `As a medical AI assistant, respond to this health question.
     Patient context: ${JSON.stringify(healthContext || {})}
     Question: ${message}
     Provide a helpful, professional response:`;
-
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -26,7 +24,6 @@ router.post('/chat', authenticateToken, async (req, res) => {
       temperature: 0.7,
       max_tokens: 500
     });
-
     res.json({ response: response.choices[0].message.content });
   } catch (error) {
     console.error('AI error:', error);
@@ -41,13 +38,11 @@ router.post('/analyze', authenticateToken, upload.single('file'), async (req, re
     // 1. Process the uploaded file
     // 2. Extract text (using OCR if needed)
     // 3. Send to AI for analysis
-
     // Mock implementation
     const mockResponse = {
       summary: "Based on the document analysis, your results appear normal. Key findings:\n- Cholesterol: 180 mg/dL (normal range)\n- Blood pressure: 120/80\nRecommend annual checkup.",
       highlights: ["Normal cholesterol", "Healthy blood pressure"]
     };
-
     res.json(mockResponse);
   } catch (error) {
     console.error('Analysis error:', error);
@@ -196,6 +191,5 @@ router.post("/generate-report", authenticateToken, async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;

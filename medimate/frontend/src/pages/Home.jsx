@@ -12,45 +12,44 @@ import HealthData from '../pages/HealthData';
 import AIAssistant from '../pages/AIAssistant';
 import Nearby from '../pages/Nearby';
 import HealthReport from '../pages/HealthReport';
-import RemoteConsult from '../pages/RemoteConsult';
+import DocAppointment from '../pages/DocAppointment';
 import UserProfile from '../pages/UserProfile';
 import MyDevices from '../pages/MyDevices';
 import HealthDataForm from '../pages/HealthDataForm';
 
-// Component to handle navigation logic
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // If user is at root path or login path, redirect to dashboard
+    // Redirect users only if the path is `/` or `/login`
     if (location.pathname === '/' || location.pathname === '/login') {
       navigate('/dashboard', { replace: true });
     }
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname]); // Remove hardcoded redirection for other paths
 
   return (
-    <div className="app">
-      <Header />
-      <div className="main-container">
-        <Sidebar />
-        <main className="content">
-          <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/health-data" element={<HealthData />} />
-            <Route path="/ai-assistant" element={<AIAssistant />} />
-            <Route path="/nearby" element={<Nearby />} />
-            <Route path="/health-report" element={<HealthReport />} />
-            <Route path="/remote-consult" element={<RemoteConsult />} />
-            <Route path="/user-profile" element={<UserProfile />} />
-            <Route path="/my-devices" element={<MyDevices />} />
-            <Route path="/health-data-form" element={<HealthDataForm />} />
-            {/* All other route redirect to dashboard */}
-            <Route path="*" element={<Dashboard />} />
-          </Routes>
-        </main>
+      <div className="app">
+        <Header />
+        <div className="main-container">
+          <Sidebar />
+          <main className="content">
+            <Routes>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/health-data" element={<HealthData />} />
+              <Route path="/ai-assistant" element={<AIAssistant />} />
+              <Route path="/nearby" element={<Nearby />} />
+              <Route path="/health-report" element={<HealthReport />} />
+              <Route path="/doctor-appointment" element={<DocAppointment />} />
+              <Route path="/user-profile" element={<UserProfile />} />
+              <Route path="/my-devices" element={<MyDevices />} />
+              <Route path="/health-data-form" element={<HealthDataForm />} />
+              {/* Invalid routes show a 404-like message */}
+              <Route path="*" element={<p>Page Not Found</p>} />
+            </Routes>
+          </main>
+        </div>
       </div>
-    </div>
   );
 }
 

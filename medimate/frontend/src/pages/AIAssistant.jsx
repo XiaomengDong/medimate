@@ -28,7 +28,6 @@ function AIAssistant() {
 
       // Call AI API
       const aiResponse = await aiAPI.chat(input, healthContext);
-
       setChatHistory(prev => [
         ...prev,
         { type: 'ai', message: aiResponse }
@@ -71,54 +70,53 @@ function AIAssistant() {
   };
 
   return (
-      <div className="ai-advice-container">
-        <h2>Ask questions about your health or upload medical documents for analysis</h2>
-
-        <div className="chat-container">
-          <div className="chat-messages">
-            {chatHistory.map((chat, index) => (
-                <div key={index} className={`message ${chat.type}`}>
-                  {chat.type === 'ai' && <FaRobot className="message-icon" />}
-                  {/* Use ReactMarkdown to render aiResponse */}
-                  <div className="message-content">
-                    {chat.type === 'ai' ? (
-                        <ReactMarkdown>{chat.message}</ReactMarkdown>
-                    ) : (
-                        chat.message
-                    )}
-                  </div>
-                </div>
-            ))}
-            {isLoading && (
-                <div className="message ai">
-                  <FaRobot className="message-icon" />
-                  <div className="message-content">Thinking...</div>
-                </div>
-            )}
-          </div>
-
-          <form className="chat-input-form" onSubmit={handleSendMessage}>
-            <label className="upload-button">
-              <FaFile />
-              <input
-                  type="file"
-                  style={{ display: 'none' }}
-                  onChange={handleFileUpload}
-                  accept=".pdf,.doc,.docx,.txt,.image/*"
-              />
-            </label>
-            <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your health question here..."
-                disabled={isLoading}
-            />
-            <button type="submit" className="send-button" disabled={isLoading}>
-              <FaPaperPlane />
-            </button>
-          </form>
+    <div className="ai-advice-container">
+      <h2>Ask questions about your health or upload medical documents for analysis</h2>
+      
+      <div className="chat-container">
+        <div className="chat-messages">
+          {chatHistory.map((chat, index) => (
+            <div key={index} className={`message ${chat.type}`}>
+              {chat.type === 'ai' && <FaRobot className="message-icon" />}
+              {/* Use ReactMarkdown to render aiResponse */}
+              <div className="message-content">
+                {chat.type === 'ai' ? (
+                  <ReactMarkdown>{chat.message}</ReactMarkdown>
+                ) : (
+                  chat.message
+                )}
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="message ai">
+              <FaRobot className="message-icon" />
+              <div className="message-content">Thinking...</div>
+            </div>
+          )}
         </div>
+        
+        <form className="chat-input-form" onSubmit={handleSendMessage}>
+          <label className="upload-button">
+            <FaFile />
+            <input 
+              type="file" 
+              style={{ display: 'none' }} 
+              onChange={handleFileUpload}
+              accept=".pdf,.doc,.docx,.txt,.image/*"
+            />
+          </label>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type your health question here..."
+            disabled={isLoading}
+          />
+          <button type="submit" className="send-button" disabled={isLoading}>
+            <FaPaperPlane />
+          </button>
+        </form>
       </div>
   );
 }

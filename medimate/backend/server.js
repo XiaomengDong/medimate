@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth.js');
 // const docAppointmentRoutes = require('./routes/docAppointment.js');
 const healthDataRoutes = require('./routes/healthData')
 const healthProfileRoutes = require('./routes/healthProfile.js');
+const docAppointmentRoutes = require('./routes/docAppointment.js');
 const authenticateToken = require('./middleware/auth.js');
 const aiAssistantRoutes = require('./routes/aiAssistant');
 
@@ -31,7 +32,8 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 
 // Doc Appointment
-// app.use('/api/doc-appointment', docAppointmentRoutes);
+app.use('/api/doc-appointment', docAppointmentRoutes);
+
 
 // AI routes
 app.use('/api/ai', aiAssistantRoutes);
