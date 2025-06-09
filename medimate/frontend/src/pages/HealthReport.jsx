@@ -5,11 +5,28 @@ import ReactMarkdown from 'react-markdown';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { makeAuthenticatedRequest, aiAPI } from '../services/api';
+import userProfile from "./UserProfile";
+import {
+  Heart,
+  Activity,
+  Thermometer,
+  Droplets,
+  AlertTriangle,
+  CheckCircle,
+  TrendingUp,
+  TrendingDown,
+  Clock,
+  User,
+  FileText,
+  Download,
+  RefreshCw
+} from 'lucide-react';
 
 function HealthReport() {
   const { user, isAuthenticated } = useAuth();
   const [healthData, setHealthData] = useState(null);
-  const [report, setReport] = useState(null);
+  const [healthReport, setHealthReport] = useState(null);
   const [reportHistory, setReportHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,31 +34,28 @@ function HealthReport() {
   const [reportType, setReportType] = useState('comprehensive');
   const [healthScore, setHealthScore] = useState(85);
   const [downloading, setDownloading] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
-  // Fetch health data on component mount
   useEffect(() => {
     if (user) {
       fetchHealthData();
-      fetchReportHistory();
+      fetchUserProfile();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Fetch user's health data
   const fetchHealthData = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5050'}/api/health-report/data/${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response =  await makeAuthenticatedRequest('/api/health-data');
       
       if (!response.ok) throw new Error('Failed to fetch health data');
       
       const data = await response.json();
       setHealthData(data);
-      calculateHealthScore(data.healthMetrics);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -67,47 +81,44 @@ function HealthReport() {
     }
   };
 
-  const calculateHealthScore = (metrics) => {
-    let score = 100;
-    
-    if (metrics.heartRate.average < 60 || metrics.heartRate.average > 100) {
-      score -= 10;
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await makeAuthenticatedRequest('/api/health-profile');
+      if (!response.ok) throw new Error('Failed to fetch user profile');
+      const data = await response.json();
+      setUserProfile(data);
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
     }
-    
-    if (metrics.bloodPressure.systolic.average > 130 || metrics.bloodPressure.diastolic.average > 80) {
-      score -= 15;
-    }
-    
-    if (metrics.bloodOxygen.average < 95) {
-      score -= 20;
-    }
-    
-    setHealthScore(Math.max(0, score));
-  };
+  }
 
   const generateReport = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+      const { heartRate, sleepQuality, bloodOxygen, bloodPressure } = getHealthMetrics();
+      const healthData = {
+        heartRate,
+        sleepQuality,
+        bloodOxygen,
+        bloodPressure,
+        temperature: 98.5,
+      }
+      const userInfo = {
+        height: userProfile.height,
+        weight: userProfile.weight,
+        age: userProfile.age,
+        gender: userProfile.gender,
+      }
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5050'}/api/health-report/generate`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          healthData,
-          reportType
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate report');
-      
-      const data = await response.json();
-      setReport(data.report);
+      const response = await aiAPI.generateHealthReport(healthData, userInfo);
+      if (!response.success) throw new Error('Failed to generate report');
+      console.log(response.report);
+      setHealthReport(response);
+      setShowReport(true);
     } catch (err) {
+      console.error('Error generating report:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -157,38 +168,82 @@ function HealthReport() {
     }
   };
 
-  const getChartData = () => {
-    if (!healthData || !healthData.healthMetrics) return [];
-    
-    switch (selectedMetric) {
-      case 'heartRate':
-        return healthData.healthMetrics.heartRate.data;
-      case 'bloodOxygen':
-        return healthData.healthMetrics.bloodOxygen.data;
-      case 'sleepQuality':
-        return healthData.healthMetrics.sleepQuality.data;
-      case 'weight':
-        return healthData.healthMetrics.weight.data;
-      default:
-        return [];
+  const getHealthMetrics = () => {
+    if (!healthData) return [];
+    let heartRate = 0;
+    let sleepQuality = 0;
+    let bloodOxygen = 0;
+    let bloodPressure = 0;
+    for (let i = 0; i < healthData.length; i++) {
+      if (healthData[i].type === 'heart_rate') {
+        heartRate = healthData[i].value;
+      }
+      if (healthData[i].type === 'sleep_quality') {
+        sleepQuality = healthData[i].value;
+      }
+      if (healthData[i].type === 'blood_oxygen') {
+        bloodOxygen = healthData[i].value;
+      }
+      if (healthData[i].type === 'blood_pressure') {
+        bloodPressure = healthData[i].value;
+      }
+    }
+    return { heartRate, sleepQuality, bloodOxygen, bloodPressure };
+  }
+
+  const getStatusClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'normal': case 'good': case 'excellent': return 'status-normal';
+      case 'elevated': case 'high': case 'fair': return 'status-warning';
+      case 'low': case 'poor': return 'status-danger';
+      default: return 'status-neutral';
     }
   };
 
-  const getIcon = (metric) => {
-    switch (metric) {
-      case 'heartRate':
-        return <FaHeartbeat />;
-      case 'sleepQuality':
-        return <FaBed />;
-      case 'bloodOxygen':
-        return <FaLungs />;
-      case 'bloodPressure':
-        return <FaTint />;
-      default:
-        return null;
+  const getRiskClass = (risk) => {
+    switch (risk?.toLowerCase()) {
+      case 'low': return 'risk-low';
+      case 'moderate': return 'risk-moderate';
+      case 'high': return 'risk-high';
+      default: return 'risk-neutral';
     }
   };
 
+  const VitalSignCard = ({ title, icon: Icon, data }) => (
+      <div className="vital-sign-card">
+        <div className="vital-sign-header">
+          <h3 className="vital-sign-title">
+            <Icon className="icon" />
+            {title}
+          </h3>
+          <span className={`status-badge ${getStatusClass(data?.status)}`}>
+          {data?.status || 'N/A'}
+        </span>
+        </div>
+        <div className="vital-sign-content">
+          <div className="vital-sign-value">
+            {data?.value || data?.systolic || 'N/A'}
+          </div>
+          <p className="vital-sign-analysis">{data?.analysis || 'No analysis available'}</p>
+        </div>
+      </div>
+  );
+
+  const AlertCard = ({ type, alerts, className, icon: Icon }) => (
+      alerts && alerts.length > 0 && (
+          <div className={`alert-card ${className}`}>
+            <div className="alert-header">
+              <Icon className="icon" />
+              <h4 className="alert-title">{type}</h4>
+            </div>
+            <ul className="alert-list">
+              {alerts.map((alert, index) => (
+                  <li key={index} className="alert-item">• {alert}</li>
+              ))}
+            </ul>
+          </div>
+      )
+  );
   if (loading && !healthData) {
     return (
       <div style={{ 
@@ -204,24 +259,20 @@ function HealthReport() {
 
   return (
     <div>
-      {user && isAuthenticated ? (
-        <h1>Hello, {user.username}!</h1>
-      ) : (
-        <h1>AI Health Report</h1>
-      )}
+      <h1>AI Health Report</h1>
       <p>Generate comprehensive health insights based on your data</p>
       <p>Let's check your health status today! 🏥</p>
 
       <div id="report-pdf-content">
         {/* Health Score Card */}
-        <div className="health-card" style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <FaCheckCircle style={{ fontSize: '3rem', color: '#4CAF50', marginBottom: '10px' }} />
-          <h2>Your Health Score</h2>
-          <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#3083ff' }}>
-            {healthScore}
-          </div>
-          <p style={{ color: '#777' }}>out of 100</p>
-        </div>
+        {/*<div className="health-card" style={{ textAlign: 'center', marginBottom: '20px' }}>*/}
+        {/*  <FaCheckCircle style={{ fontSize: '3rem', color: '#4CAF50', marginBottom: '10px' }} />*/}
+        {/*  <h2>Your Health Score</h2>*/}
+        {/*  <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#3083ff' }}>*/}
+        {/*    {healthScore}*/}
+        {/*  </div>*/}
+        {/*  <p style={{ color: '#777' }}>out of 100</p>*/}
+        {/*</div>*/}
 
         {/* Report Controls */}
         <div className="health-card">
@@ -278,7 +329,7 @@ function HealthReport() {
                 )}
               </button>
 
-              {report && (
+              {healthReport && (
                 <button 
                   onClick={downloadPDF}
                   disabled={downloading}
@@ -320,101 +371,197 @@ function HealthReport() {
           </div>
         )}
 
-        {/* Health Metrics Tabs */}
-        {healthData && (
-          <>
-            <div className="metric-tabs">
-              <button 
-                className={`metric-tab ${selectedMetric === 'heartRate' ? 'active' : ''}`}
-                onClick={() => setSelectedMetric('heartRate')}
-              >
-                <FaHeartbeat /> Heart Rate
-              </button>
-              <button 
-                className={`metric-tab ${selectedMetric === 'sleepQuality' ? 'active' : ''}`}
-                onClick={() => setSelectedMetric('sleepQuality')}
-              >
-                <FaBed /> Sleep Quality
-              </button>
-              <button 
-                className={`metric-tab ${selectedMetric === 'bloodOxygen' ? 'active' : ''}`}
-                onClick={() => setSelectedMetric('bloodOxygen')}
-              >
-                <FaLungs /> Blood Oxygen
-              </button>
-              <button 
-                className={`metric-tab ${selectedMetric === 'bloodPressure' ? 'active' : ''}`}
-                onClick={() => setSelectedMetric('bloodPressure')}
-              >
-                <FaTint /> Blood Pressure
-              </button>
-            </div>
-
-            <div className="health-card">
-              <div className="metric-header">
-                {getIcon(selectedMetric)}
-                <h2>
-                  {selectedMetric === 'heartRate' ? 'Heart Rate' : 
-                   selectedMetric === 'sleepQuality' ? 'Sleep Quality' : 
-                   selectedMetric === 'bloodOxygen' ? 'Blood Oxygen' : 
-                   'Blood Pressure'}
-                </h2>
-              </div>
-
-              {/* Display current metric values */}
-              <div className="metric-value">
-                <span className="current-value">
-                  {selectedMetric === 'heartRate' && `${healthData.healthMetrics.heartRate.average}`}
-                  {selectedMetric === 'bloodPressure' && `${healthData.healthMetrics.bloodPressure.systolic.average}/${healthData.healthMetrics.bloodPressure.diastolic.average}`}
-                  {selectedMetric === 'bloodOxygen' && `${healthData.healthMetrics.bloodOxygen.average}`}
-                  {selectedMetric === 'sleepQuality' && `${healthData.healthMetrics.sleepQuality.average}`}
-                </span>
-                <span className="unit">
-                  {selectedMetric === 'heartRate' && 'BPM'}
-                  {selectedMetric === 'bloodPressure' && 'mmHg'}
-                  {selectedMetric === 'bloodOxygen' && '%'}
-                  {selectedMetric === 'sleepQuality' && '/10'}
-                </span>
-              </div>
-
-              {/* Chart */}
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={getChartData()}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#3083ff" 
-                    strokeWidth={2}
-                    dot={{ fill: '#3083ff' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        )}
-
         {/* Generated Report */}
-        {report && (
-          <div className="health-card" style={{ marginTop: '30px' }}>
-            <h2>Your Health Report</h2>
-            <div style={{ lineHeight: '1.8', marginTop: '20px' }}>
-              <ReactMarkdown>{report.content}</ReactMarkdown>
+        {showReport && (
+          <div className="report-sections">
+            {/* Report Summary */}
+            <div className="report-summary">
+              <div className="summary-header">
+                <h2 className="section-title">Report Summary</h2>
+                <div className="report-timestamp">
+                  <Clock className="icon" />
+                  Generated: {new Date(healthReport.report.generatedAt).toLocaleString()}
+                </div>
+              </div>
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <User className="summary-icon" />
+                  <div className="summary-label">Overall Status</div>
+                  <div className={`summary-value ${getStatusClass(healthReport.report.patientSummary?.overallHealthStatus)}`}>
+                    {healthReport.report.patientSummary?.overallHealthStatus || 'N/A'}
+                  </div>
+                </div>
+                <div className="summary-item">
+                  <Activity className="summary-icon" />
+                  <div className="summary-label">Data Points</div>
+                  <div className="summary-value">
+                    {healthReport.metadata?.dataPointsAnalyzed || 0}
+                  </div>
+                </div>
+                <div className="summary-item">
+                  <FileText className="summary-icon" />
+                  <div className="summary-label">Overall Score</div>
+                  <div className="summary-value report-id">
+                    {healthReport.report.patientSummary?.overallHealthScore}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={{ 
-              marginTop: '30px', 
-              padding: '15px', 
-              backgroundColor: '#fff3cd', 
-              border: '1px solid #ffeeba',
-              borderRadius: '5px',
-              color: '#856404'
-            }}>
-              <strong>Disclaimer:</strong> This report is generated by AI and should not replace professional medical advice. 
-              Always consult with healthcare professionals for medical decisions.
+
+            {/* Vital Signs */}
+            <div className="vital-signs-section">
+              <h2 className="section-title">Vital Signs</h2>
+              <div className="vital-signs-grid">
+                <VitalSignCard
+                    title="Heart Rate"
+                    icon={Heart}
+                    data={healthReport.report.vitalSigns?.heartRate}
+                />
+                <VitalSignCard
+                    title="Blood Pressure"
+                    icon={Droplets}
+                    data={healthReport.report.vitalSigns?.bloodPressure}
+                />
+                <VitalSignCard
+                    title="Temperature"
+                    icon={Thermometer}
+                    data={healthReport.report.vitalSigns?.temperature}
+                />
+                <VitalSignCard
+                    title="Oxygen Saturation"
+                    icon={Activity}
+                    data={healthReport.report.vitalSigns?.oxygenSaturation}
+                />
+              </div>
+            </div>
+
+            {/* Risk Assessment */}
+            <div className="risk-assessment">
+              <h2 className="section-title">Risk Assessment</h2>
+              <div className="risk-grid">
+                <div className="risk-item">
+                  <div className="risk-label">Cardiovascular Risk</div>
+                  <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.cardiovascularRisk)}`}>
+                  {healthReport.report.riskAssessment?.cardiovascularRisk || 'N/A'}
+                </span>
+                </div>
+                <div className="risk-item">
+                  <div className="risk-label">Diabetes Risk</div>
+                  <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.diabetesRisk)}`}>
+                  {healthReport.report.riskAssessment?.diabetesRisk || 'N/A'}
+                </span>
+                </div>
+                <div className="risk-item">
+                  <div className="risk-label">Overall Risk</div>
+                  <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.overallRisk)}`}>
+                  {healthReport.report.riskAssessment?.overallRisk || 'N/A'}
+                </span>
+                </div>
+              </div>
+              {healthReport.report.riskAssessment?.riskFactors && healthReport.report.riskAssessment.riskFactors.length > 0 && (
+                  <div className="risk-factors">
+                    <h4 className="risk-factors-title">Identified Risk Factors:</h4>
+                    <ul className="risk-factors-list">
+                      {healthReport.report.riskAssessment.riskFactors.map((factor, index) => (
+                          <li key={index} className="risk-factor-item">• {factor}</li>
+                      ))}
+                    </ul>
+                  </div>
+              )}
+            </div>
+
+            {/* Alerts */}
+            <div className="alerts-section">
+              <h2 className="section-title">Alerts & Notifications</h2>
+              <div className="alerts-container">
+                <AlertCard
+                    type="Critical"
+                    alerts={healthReport.report.alerts?.critical}
+                    className="alert-critical"
+                    icon={AlertTriangle}
+                />
+                <AlertCard
+                    type="Warnings"
+                    alerts={healthReport.report.alerts?.warnings}
+                    className="alert-warning"
+                    icon={AlertTriangle}
+                />
+                <AlertCard
+                    type="Notifications"
+                    alerts={healthReport.report.alerts?.notifications}
+                    className="alert-info"
+                    icon={CheckCircle}
+                />
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div className="recommendations-section">
+              <div className="recommendations-card">
+                <h3 className="card-title">Recommendations</h3>
+                <div className="recommendations-content">
+                  {healthReport.report.recommendations?.immediate && (
+                      <div className="recommendation-group">
+                        <h4 className="recommendation-title immediate">Immediate Actions:</h4>
+                        <ul className="recommendation-list">
+                          {healthReport.report.recommendations.immediate.map((rec, index) => (
+                              <li key={index} className="recommendation-item">• {rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                  )}
+                  {healthReport.report.recommendations?.lifestyle && (
+                      <div className="recommendation-group">
+                        <h4 className="recommendation-title lifestyle">Lifestyle Changes:</h4>
+                        <ul className="recommendation-list">
+                          {healthReport.report.recommendations.lifestyle.map((rec, index) => (
+                              <li key={index} className="recommendation-item">• {rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                  )}
+                </div>
+              </div>
+
+              {/*Health Trends*/}
+              {/*<div className="trends-card">*/}
+              {/*  <h3 className="card-title">Health Trends</h3>*/}
+              {/*  <div className="trends-content">*/}
+              {/*    {healthReport.report.trends?.improving && healthReport.report.trends.improving.length > 0 && (*/}
+              {/*        <div className="trend-group">*/}
+              {/*          <h4 className="trend-title improving">*/}
+              {/*            <TrendingUp className="icon" />*/}
+              {/*            Improving:*/}
+              {/*          </h4>*/}
+              {/*          <ul className="trend-list">*/}
+              {/*            {healthReport.report.trends.improving.map((trend, index) => (*/}
+              {/*                <li key={index} className="trend-item">• {trend}</li>*/}
+              {/*            ))}*/}
+              {/*          </ul>*/}
+              {/*        </div>*/}
+              {/*    )}*/}
+              {/*    {healthReport.report.trends?.declining && healthReport.report.trends.declining.length > 0 && (*/}
+              {/*        <div className="trend-group">*/}
+              {/*          <h4 className="trend-title declining">*/}
+              {/*            <TrendingDown className="icon" />*/}
+              {/*            Declining:*/}
+              {/*          </h4>*/}
+              {/*          <ul className="trend-list">*/}
+              {/*            {healthReport.report.trends.declining.map((trend, index) => (*/}
+              {/*                <li key={index} className="trend-item">• {trend}</li>*/}
+              {/*            ))}*/}
+              {/*          </ul>*/}
+              {/*        </div>*/}
+              {/*    )}*/}
+              {/*  </div>*/}
+              {/*</div>*/}
+            </div>
+
+            {/* Disclaimer */}
+            <div className="disclaimer">
+              <p className="disclaimer-text">
+                {healthReport.report.disclaimer}
+              </p>
             </div>
           </div>
         )}
