@@ -1,10 +1,4 @@
-const { Pool } = require("pg");
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false } // Render uses self‑signed cert
-    : false
-});
+const pool = require("../config/database");
 
 module.exports = {
   async create({ ownerId, date, type, value, note }) {

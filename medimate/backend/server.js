@@ -5,9 +5,13 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth.js');
 const authenticateToken = require('./middleware/auth.js');
 const healthDataRoutes = require('./routes/healthData.js');
+const AIAssistant = require('./models/AIAssistant');
 const aiAssistantRoutes = require('./routes/aiAssistant.js');
+const healthProfileRoutes = require('./routes/healthProfile.js');
 const app = express();
 const PORT = process.env.PORT || 5050;
+const assistant   = new AIAssistant();
+app.set('aiAssistant', assistant);
 
 app.use(cors({
   origin: [
@@ -42,6 +46,7 @@ app.get('/api/health', (req, res) => {
 
 //
 app.use('/api/health-data', healthDataRoutes);
+app.use('/api/health-profile', healthProfileRoutes);
 //app.use('/api/devices', devicesRoutes);
 //app.use('/api/hospitals', hospitalsRoutes);
 app.use('/api/ai-assistant', aiAssistantRoutes);
