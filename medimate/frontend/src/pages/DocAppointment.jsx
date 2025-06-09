@@ -204,7 +204,7 @@ function DocAppointment() {
                                 <div className="doctor-info">
                                     <div className="doctor-header">
                                         <h3>{doctor.name}</h3>
-                                        <div className="rating">
+                                        <div className="doctor-rating">
                                             <FaStar className="star-icon" />
                                             <span>{doctor.rating}</span>
                                         </div>

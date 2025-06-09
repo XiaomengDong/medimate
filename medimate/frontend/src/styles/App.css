@@ -438,7 +438,7 @@
   font-size: 1.3rem;
 }
 
-.rating {
+.doctor-rating {
   display: flex;
   align-items: center;
   gap: 5px;

@@ -57,7 +57,7 @@ function Nearby() {
     if (loading) return <p>Loading nearby hospitals...</p>;
 
     return (
-        <div className="nearby-container">
+        <div>
             <h1>Nearby Hospitals</h1>
             <div className="view-toggle">
                 <button className={`toggle-button ${viewType==='list'?'active':''}`} onClick={()=>setViewType('list')}>List View</button>
