@@ -12,7 +12,7 @@ import HealthData from '../pages/HealthData';
 import AIAssistant from '../pages/AIAssistant';
 import Nearby from '../pages/Nearby';
 import HealthReport from '../pages/HealthReport';
-import RemoteConsult from '../pages/RemoteConsult';
+import DocAppointment from '../pages/DocAppointment';
 import UserProfile from '../pages/UserProfile';
 import MyDevices from '../pages/MyDevices';
 import HealthDataForm from '../pages/HealthDataForm';
@@ -40,7 +40,7 @@ function AppContent() {
               <Route path="/ai-assistant" element={<AIAssistant />} />
               <Route path="/nearby" element={<Nearby />} />
               <Route path="/health-report" element={<HealthReport />} />
-              <Route path="/remote-consult" element={<RemoteConsult />} />
+              <Route path="/doctor-appointment" element={<DocAppointment />} />
               <Route path="/user-profile" element={<UserProfile />} />
               <Route path="/my-devices" element={<MyDevices />} />
               <Route path="/health-data-form" element={<HealthDataForm />} />

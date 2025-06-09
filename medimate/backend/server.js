@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth.js');
+const docAppointmentRoutes = require('./routes/docAppointment.js');
 const authenticateToken = require('./middleware/auth.js');
 
 const app = express();
@@ -25,6 +26,9 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+
+// Doc Appointment
+app.use('/api/doc-appointment', docAppointmentRoutes);
 
 // Get Nearby Hospitals
 app.get('/api/nearby-hospitals', async (req, res) => {
