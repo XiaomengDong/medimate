@@ -91,6 +91,50 @@ export const makeAuthenticatedRequest = async (endpoint, options = {}) => {
   return response;
 };
 
+export async function fetchDoctors() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/doc-appointment/doctors`);
+    if (!response.ok) throw new Error('Failed to fetch doctors');
+    return await response.json();
+  } catch (err) {
+    console.error('Error fetching doctors:', err);
+    throw err;
+  }
+}
+
+export async function fetchPatientAppointments(userId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/doc-appointment/appointments/${userId}`);
+    if (!response.ok) throw new Error('Failed to fetch patient appointments');
+    return await response.json();
+  } catch (err) {
+    console.error('Error fetching patient appointments:', err);
+  }
+}
+
+export async function createAppointment({ userId, doctorId, appointment_date, appointment_time, notes }) {
+  const response = await fetch(`${API_BASE_URL}/api/doc-appointment/appointments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, doctor_id: doctorId, appointment_date, appointment_time, notes })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to create appointment');
+  }
+  return data;
+}
+
+export async function cancelAppointment(appointmentId) {
+  const response = await fetch(`${API_BASE_URL}/api/doc-appointment/appointments/${appointmentId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'cancelled' })
+  });
+  if (!response.ok) throw new Error('Failed to cancel appointment');
+  return true;
+}
+
 // Get nearby hospitals
 export const getNearbyHospitals = async (lat, lng) => {
   const response = await fetch(`${API_BASE_URL}/api/nearby-hospitals?lat=${lat}&lng=${lng}`);
