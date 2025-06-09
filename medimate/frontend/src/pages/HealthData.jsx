@@ -196,7 +196,7 @@ function HealthData() {
                 onClick={saveEdit}>
                 <FaSave /> Save
               </button>
-              <button className="icon-btn text-red-600" onClick={cancelEdit}>
+              <button className="icon-btn-cancel text-red-600" onClick={cancelEdit}>
                 <FaTimes /> Cancel
               </button>
             </>

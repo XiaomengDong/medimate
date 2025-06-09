@@ -716,7 +716,39 @@
     align-items: center;
     color: #777;
   }
-  
+
+  /* Health Data page button*/
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  border: none;
+  background: #6caae6;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.icon-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  border: none;
+  background: #bcbec4;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
   /* User Profile Page Styles */
   .user-profile {
     max-width: 800px;
@@ -818,7 +850,7 @@
   .status.offline {
     color: #777;
   }
-  
+
   .remove-device-btn {
     background: none;
     border: none;
