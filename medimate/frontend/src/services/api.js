@@ -146,3 +146,45 @@ export const getNearbyHospitals = async (lat, lng) => {
 
   return data || [];
 }
+
+// Get AI API 
+export const aiAPI = {
+  chat: async (message, healthContext = {}) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ message, healthContext }),
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'AI request failed');
+    return data.response;
+  },
+
+  analyzeDocument: async (file) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/api/ai/analyze`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Document analysis failed');
+    return data;
+  }
+};

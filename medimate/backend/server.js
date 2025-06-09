@@ -5,6 +5,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth.js');
 const docAppointmentRoutes = require('./routes/docAppointment.js');
 const authenticateToken = require('./middleware/auth.js');
+const aiAssistantRoutes = require('./routes/aiAssistant');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -29,6 +30,10 @@ app.use('/api/auth', authRoutes);
 
 // Doc Appointment
 app.use('/api/doc-appointment', docAppointmentRoutes);
+
+// AI routes
+app.use('/api/ai', aiAssistantRoutes);
+
 
 // Get Nearby Hospitals
 app.get('/api/nearby-hospitals', async (req, res) => {
@@ -100,3 +105,4 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
