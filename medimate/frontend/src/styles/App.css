@@ -96,8 +96,8 @@
   color: #007bff;
 }
 .book-first-btn {
-  background: #007bff;
-  color: #fff;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
@@ -479,18 +479,6 @@
 
 .doctor-actions {
   margin-top: 20px;
-}
-
-.book-first-btn {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  display: flex;
 }
 
 .schedule-btn {
@@ -1401,9 +1389,10 @@
   }
   
   .message-icon {
-    margin-right: 20px;
-    margin-top: 10px;
-    width: 50px;
+    margin-right: 15px;
+    margin-top: 2px;
+    font-size: xxx-large;
+    color: #3083ff;
   }
   
   .chat-input-form {
@@ -1757,7 +1746,7 @@
   width: 32px;
   height: 32px;
   margin: 0 auto 8px;
-  color: #6b7280;
+  color: #56a8f5;
 }
 
 .summary-label {
@@ -1772,9 +1761,9 @@
   color: #111827;
 }
 
-.report-id {
+.report-score {
   font-family: monospace;
-  font-size: 0.75rem;
+  font-size: 1rem;
   word-break: break-all;
 }
 
@@ -1787,6 +1776,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
+}
+
+.vital-icon {
+  width: 20px;
+  height: 20px;
+  color: #e83131;
 }
 
 .vital-sign-card {
@@ -1829,6 +1824,38 @@
   font-size: 0.875rem;
   color: #6b7280;
   margin: 0;
+}
+
+/* Loader.css */
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #ddd;
+  border-top: 4px solid #3083ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Status badge styles */

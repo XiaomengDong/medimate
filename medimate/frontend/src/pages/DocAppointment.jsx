@@ -10,7 +10,7 @@ import {
 
 function DocAppointment() {
     const { user } = useAuth();
-    const [viewType, setViewType] = useState('list');
+    const [viewType, setViewType] = useState('appointments');
     const [doctors, setDoctors] = useState([]);
     const [patientAppointments, setPatientAppointments] = useState([]);
     const [loading, setLoading] = useState(false);

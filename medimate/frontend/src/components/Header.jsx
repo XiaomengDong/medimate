@@ -80,10 +80,6 @@ function Header() {
                 <FaListAlt />
                 <span>Health Data</span>
               </li>
-              <li onClick={() => handleNavigation('/settings')}>
-                <FaCog />
-                <span>Settings</span>
-              </li>
               <li className="dropdown-logout" onClick={handleLogout}>
                 <FaSignOutAlt />
                 <span>Log Out</span>

@@ -47,10 +47,9 @@ function MyDevices() {
     setDevices(devices.filter(device => device.id !== id));
   };
 
-  // Function to handle adding a new device (would be connected to actual pairing process in a real app)
+  // Function to handle adding a new device
   const handleAddDevice = () => {
-    // In a real app, this would open a device pairing process
-    alert("In a real app, this would start the device pairing process");
+    alert("This feature is not available yet. Stay tuned for updates!");
   };
 
   return (

@@ -214,25 +214,3 @@ export const aiAPI = {
     return data;
   }
 };
-
-// export async function chatWithAI(message, history = []) {
-//   return makeAuthenticatedRequest('/api/ai-assistant/chat', {
-//     method: 'POST',
-//     body: JSON.stringify({ message, chatHistory: history })
-//   })
-//   .then(r => r.json())
-//   .then(({ reply }) => reply);
-// }
-//
-// export async function uploadDoc(file) {
-//   const fd = new FormData();
-//   fd.append('file', file);
-//   return makeAuthenticatedRequest('/api/ai-assistant/upload', {
-//     method: 'POST',
-//     body: fd,
-//     headers: {}
-//   }).then(r => r.json());
-// }
-
-  }
-};

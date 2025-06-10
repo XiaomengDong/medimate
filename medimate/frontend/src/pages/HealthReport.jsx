@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FaChartLine, FaHeartbeat, FaFileMedical, FaDownload, FaHistory, FaSpinner, FaCheckCircle, FaExclamationCircle, FaSun, FaTint, FaLungs, FaBed } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
-import ReactMarkdown from 'react-markdown';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { makeAuthenticatedRequest, aiAPI } from '../services/api';
-import userProfile from "./UserProfile";
 import {
   Heart,
   Activity,
@@ -14,14 +11,11 @@ import {
   Droplets,
   AlertTriangle,
   CheckCircle,
-  TrendingUp,
-  TrendingDown,
   Clock,
   User,
   FileText,
-  Download,
-  RefreshCw
 } from 'lucide-react';
+import Loader from '../components/Loader';
 
 function HealthReport() {
   const { user, isAuthenticated } = useAuth();
@@ -94,6 +88,14 @@ function HealthReport() {
   }
 
   const generateReport = async () => {
+    if (!userProfile) {
+      setError("Please update your profile first before generating a report");
+      return;
+    }
+    if (!healthData) {
+      setError("Please add your health data first before generating a report");
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -213,7 +215,7 @@ function HealthReport() {
       <div className="vital-sign-card">
         <div className="vital-sign-header">
           <h3 className="vital-sign-title">
-            <Icon className="icon" />
+            <Icon className="vital-icon" />
             {title}
           </h3>
           <span className={`status-badge ${getStatusClass(data?.status)}`}>
@@ -257,84 +259,55 @@ function HealthReport() {
     );
   }
 
-  return (
-    <div>
-      <h1>AI Health Report</h1>
-      <p>Generate comprehensive health insights based on your data</p>
-      <p>Let's check your health status today! 🏥</p>
+return (
+  <div>
+    {loading && <Loader />}
+    {!loading && (
+      <div>
+        <h1>AI Health Report</h1>
+        <p>Generate comprehensive health insights based on your data</p>
+        <p>Let's check your health status today! 🏥</p>
 
-      <div id="report-pdf-content">
-        {/* Health Score Card */}
-        {/*<div className="health-card" style={{ textAlign: 'center', marginBottom: '20px' }}>*/}
-        {/*  <FaCheckCircle style={{ fontSize: '3rem', color: '#4CAF50', marginBottom: '10px' }} />*/}
-        {/*  <h2>Your Health Score</h2>*/}
-        {/*  <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#3083ff' }}>*/}
-        {/*    {healthScore}*/}
-        {/*  </div>*/}
-        {/*  <p style={{ color: '#777' }}>out of 100</p>*/}
-        {/*</div>*/}
+        <div id="report-pdf-content">
+          {/* Health Score Card */}
+          {/*<div className="health-card" style={{ textAlign: 'center', marginBottom: '20px' }}>*/}
+          {/*  <FaCheckCircle style={{ fontSize: '3rem', color: '#4CAF50', marginBottom: '10px' }} />*/}
+          {/*  <h2>Your Health Score</h2>*/}
+          {/*  <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#3083ff' }}>*/}
+          {/*    {healthScore}*/}
+          {/*  </div>*/}
+          {/*  <p style={{ color: '#777' }}>out of 100</p>*/}
+          {/*</div>*/}
 
-        {/* Report Controls */}
-        <div className="health-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 auto' }}>
-              <label style={{ fontWeight: '500', whiteSpace: 'nowrap' }}>Report Type:</label>
-              <select 
-                value={reportType} 
-                onChange={(e) => setReportType(e.target.value)}
-                style={{ 
-                  padding: '8px 12px', 
-                  border: '1px solid #ddd', 
-                  borderRadius: '5px',
-                  fontSize: '16px',
-                  minWidth: '150px'
-                }}
-              >
-                <option value="comprehensive">Comprehensive</option>
-                <option value="monthly">Monthly Summary</option>
-                <option value="quarterly">Quarterly Review</option>
-                <option value="focused">Focused Analysis</option>
-              </select>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-              <button 
-                onClick={generateReport}
-                disabled={loading || !healthData}
-                style={{ 
-                  backgroundColor: '#3083ff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '20px',
-                  padding: '10px 20px',
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  whiteSpace: 'nowrap',
-                  opacity: (loading || !healthData) ? '0.6' : '1'
-                }}
-              >
-                {loading ? (
-                  <>
-                    <FaSpinner className="spinner" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <FaFileMedical />
-                    Generate Report
-                  </>
-                )}
-              </button>
-
-              {healthReport && (
-                <button 
-                  onClick={downloadPDF}
-                  disabled={downloading}
+          {/* Report Controls */}
+          <div className="health-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 auto' }}>
+                <label style={{ fontWeight: '500', whiteSpace: 'nowrap' }}>Report Type:</label>
+                <select 
+                  value={reportType} 
+                  onChange={(e) => setReportType(e.target.value)}
                   style={{ 
-                    backgroundColor: '#4CAF50',
+                    padding: '8px 12px', 
+                    border: '1px solid #ddd', 
+                    borderRadius: '5px',
+                    fontSize: '16px',
+                    minWidth: '150px'
+                  }}
+                >
+                  <option value="comprehensive">Comprehensive</option>
+                  <option value="monthly">Monthly Summary</option>
+                  <option value="quarterly">Quarterly Review</option>
+                  <option value="focused">Focused Analysis</option>
+                </select>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+                <button 
+                  onClick={generateReport}
+                  disabled={loading || !healthData}
+                  style={{ 
+                    backgroundColor: '#3083ff',
                     color: 'white',
                     border: 'none',
                     borderRadius: '20px',
@@ -345,262 +318,296 @@ function HealthReport() {
                     alignItems: 'center',
                     gap: '8px',
                     whiteSpace: 'nowrap',
-                    opacity: downloading ? '0.6' : '1'
+                    opacity: (loading || !healthData) ? '0.6' : '1'
                   }}
                 >
-                  {downloading ? (
+                  {loading ? (
                     <>
                       <FaSpinner className="spinner" />
-                      Preparing...
+                      Generating...
                     </>
                   ) : (
                     <>
-                      <FaDownload />
-                      Download PDF
+                      <FaFileMedical />
+                      Generate Report
                     </>
                   )}
                 </button>
-              )}
+
+                {healthReport && (
+                  <button 
+                    onClick={downloadPDF}
+                    disabled={downloading}
+                    style={{ 
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '10px 20px',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      whiteSpace: 'nowrap',
+                      opacity: downloading ? '0.6' : '1'
+                    }}
+                  >
+                    {downloading ? (
+                      <>
+                        <FaSpinner className="spinner" />
+                        Preparing...
+                      </>
+                    ) : (
+                      <>
+                        <FaDownload />
+                        Download PDF
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
+          {error && (
+            <div className="health-card" style={{ backgroundColor: '#fee', color: '#c00' }}>
+              {error}
+            </div>
+          )}
+
+          {/* Generated Report */}
+          {showReport && (
+            <div className="report-sections">
+              {/* Report Summary */}
+              <div className="report-summary">
+                <div className="summary-header">
+                  <h2 className="section-title">Report Summary</h2>
+                  <div className="report-timestamp">
+                    <Clock className="icon" />
+                    Generated: {new Date(healthReport.report.generatedAt).toLocaleString()}
+                  </div>
+                </div>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <User className="summary-icon" />
+                    <div className="summary-label">Overall Status</div>
+                    <div className={`summary-value ${getStatusClass(healthReport.report.patientSummary?.overallHealthStatus)}`}>
+                      {healthReport.report.patientSummary?.overallHealthStatus || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="summary-item">
+                    <Activity className="summary-icon" />
+                    <div className="summary-label">Data Points</div>
+                    <div className="summary-value">
+                      {healthReport.metadata?.dataPointsAnalyzed || 0}
+                    </div>
+                  </div>
+                  <div className="summary-item">
+                    <FileText className="summary-icon" />
+                    <div className="summary-label">Overall Score</div>
+                    <div className="summary-value report-score">
+                      {healthReport.report.patientSummary?.overallHealthScore}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Vital Signs */}
+              <div className="vital-signs-section">
+                <h2 className="section-title">Vital Signs</h2>
+                <div className="vital-signs-grid">
+                  <VitalSignCard
+                      title="Heart Rate"
+                      icon={Heart}
+                      data={healthReport.report.vitalSigns?.heartRate}
+                  />
+                  <VitalSignCard
+                      title="Blood Pressure"
+                      icon={Droplets}
+                      data={healthReport.report.vitalSigns?.bloodPressure}
+                  />
+                  <VitalSignCard
+                      title="Temperature"
+                      icon={Thermometer}
+                      data={healthReport.report.vitalSigns?.temperature}
+                  />
+                  <VitalSignCard
+                      title="Oxygen Saturation"
+                      icon={Activity}
+                      data={healthReport.report.vitalSigns?.oxygenSaturation}
+                  />
+                </div>
+              </div>
+
+              {/* Risk Assessment */}
+              <div className="risk-assessment">
+                <h2 className="section-title">Risk Assessment</h2>
+                <div className="risk-grid">
+                  <div className="risk-item">
+                    <div className="risk-label">Cardiovascular Risk</div>
+                    <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.cardiovascularRisk)}`}>
+                    {healthReport.report.riskAssessment?.cardiovascularRisk || 'N/A'}
+                  </span>
+                  </div>
+                  <div className="risk-item">
+                    <div className="risk-label">Diabetes Risk</div>
+                    <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.diabetesRisk)}`}>
+                    {healthReport.report.riskAssessment?.diabetesRisk || 'N/A'}
+                  </span>
+                  </div>
+                  <div className="risk-item">
+                    <div className="risk-label">Overall Risk</div>
+                    <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.overallRisk)}`}>
+                    {healthReport.report.riskAssessment?.overallRisk || 'N/A'}
+                  </span>
+                  </div>
+                </div>
+                {healthReport.report.riskAssessment?.riskFactors && healthReport.report.riskAssessment.riskFactors.length > 0 && (
+                    <div className="risk-factors">
+                      <h4 className="risk-factors-title">Identified Risk Factors:</h4>
+                      <ul className="risk-factors-list">
+                        {healthReport.report.riskAssessment.riskFactors.map((factor, index) => (
+                            <li key={index} className="risk-factor-item">• {factor}</li>
+                        ))}
+                      </ul>
+                    </div>
+                )}
+              </div>
+
+              {/* Alerts */}
+              <div className="alerts-section">
+                <h2 className="section-title">Alerts & Notifications</h2>
+                <div className="alerts-container">
+                  <AlertCard
+                      type="Critical"
+                      alerts={healthReport.report.alerts?.critical}
+                      className="alert-critical"
+                      icon={AlertTriangle}
+                  />
+                  <AlertCard
+                      type="Warnings"
+                      alerts={healthReport.report.alerts?.warnings}
+                      className="alert-warning"
+                      icon={AlertTriangle}
+                  />
+                  <AlertCard
+                      type="Notifications"
+                      alerts={healthReport.report.alerts?.notifications}
+                      className="alert-info"
+                      icon={CheckCircle}
+                  />
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              <div className="recommendations-section">
+                <div className="recommendations-card">
+                  <h3 className="card-title">Recommendations</h3>
+                  <div className="recommendations-content">
+                    {healthReport.report.recommendations?.immediate && (
+                        <div className="recommendation-group">
+                          <h4 className="recommendation-title immediate">Immediate Actions:</h4>
+                          <ul className="recommendation-list">
+                            {healthReport.report.recommendations.immediate.map((rec, index) => (
+                                <li key={index} className="recommendation-item">• {rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                    )}
+                    {healthReport.report.recommendations?.lifestyle && (
+                        <div className="recommendation-group">
+                          <h4 className="recommendation-title lifestyle">Lifestyle Changes:</h4>
+                          <ul className="recommendation-list">
+                            {healthReport.report.recommendations.lifestyle.map((rec, index) => (
+                                <li key={index} className="recommendation-item">• {rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                    )}
+                  </div>
+                </div>
+
+                {/*Health Trends*/}
+                {/*<div className="trends-card">*/}
+                {/*  <h3 className="card-title">Health Trends</h3>*/}
+                {/*  <div className="trends-content">*/}
+                {/*    {healthReport.report.trends?.improving && healthReport.report.trends.improving.length > 0 && (*/}
+                {/*        <div className="trend-group">*/}
+                {/*          <h4 className="trend-title improving">*/}
+                {/*            <TrendingUp className="icon" />*/}
+                {/*            Improving:*/}
+                {/*          </h4>*/}
+                {/*          <ul className="trend-list">*/}
+                {/*            {healthReport.report.trends.improving.map((trend, index) => (*/}
+                {/*                <li key={index} className="trend-item">• {trend}</li>*/}
+                {/*            ))}*/}
+                {/*          </ul>*/}
+                {/*        </div>*/}
+                {/*    )}*/}
+                {/*    {healthReport.report.trends?.declining && healthReport.report.trends.declining.length > 0 && (*/}
+                {/*        <div className="trend-group">*/}
+                {/*          <h4 className="trend-title declining">*/}
+                {/*            <TrendingDown className="icon" />*/}
+                {/*            Declining:*/}
+                {/*          </h4>*/}
+                {/*          <ul className="trend-list">*/}
+                {/*            {healthReport.report.trends.declining.map((trend, index) => (*/}
+                {/*                <li key={index} className="trend-item">• {trend}</li>*/}
+                {/*            ))}*/}
+                {/*          </ul>*/}
+                {/*        </div>*/}
+                {/*    )}*/}
+                {/*  </div>*/}
+                {/*</div>*/}
+              </div>
+
+              {/* Disclaimer */}
+              <div className="disclaimer">
+                <p className="disclaimer-text">
+                  {healthReport.report.disclaimer}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Report History */}
+          {reportHistory.length > 0 && (
+            <div className="health-card" style={{ marginTop: '30px' }}>
+              <h2><FaHistory /> Previous Reports</h2>
+              {reportHistory.map(historyReport => (
+                <div key={historyReport.id} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '15px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  marginBottom: '10px'
+                }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 5px 0', textTransform: 'capitalize' }}>
+                      {historyReport.reportType} Report
+                    </h4>
+                    <p style={{ margin: '0', color: '#777', fontSize: '0.9rem' }}>
+                      Generated: {new Date(historyReport.generatedAt).toLocaleDateString()}
+                    </p>
+                    <p style={{ margin: '5px 0 0 0', color: '#555' }}>
+                      {historyReport.summary}
+                    </p>
+                  </div>
+                  <button className="btn" style={{ backgroundColor: '#3083ff', color: 'white' }}>
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-
-        {error && (
-          <div className="health-card" style={{ backgroundColor: '#fee', color: '#c00' }}>
-            {error}
-          </div>
-        )}
-
-        {/* Generated Report */}
-        {showReport && (
-          <div className="report-sections">
-            {/* Report Summary */}
-            <div className="report-summary">
-              <div className="summary-header">
-                <h2 className="section-title">Report Summary</h2>
-                <div className="report-timestamp">
-                  <Clock className="icon" />
-                  Generated: {new Date(healthReport.report.generatedAt).toLocaleString()}
-                </div>
-              </div>
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <User className="summary-icon" />
-                  <div className="summary-label">Overall Status</div>
-                  <div className={`summary-value ${getStatusClass(healthReport.report.patientSummary?.overallHealthStatus)}`}>
-                    {healthReport.report.patientSummary?.overallHealthStatus || 'N/A'}
-                  </div>
-                </div>
-                <div className="summary-item">
-                  <Activity className="summary-icon" />
-                  <div className="summary-label">Data Points</div>
-                  <div className="summary-value">
-                    {healthReport.metadata?.dataPointsAnalyzed || 0}
-                  </div>
-                </div>
-                <div className="summary-item">
-                  <FileText className="summary-icon" />
-                  <div className="summary-label">Overall Score</div>
-                  <div className="summary-value report-id">
-                    {healthReport.report.patientSummary?.overallHealthScore}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Vital Signs */}
-            <div className="vital-signs-section">
-              <h2 className="section-title">Vital Signs</h2>
-              <div className="vital-signs-grid">
-                <VitalSignCard
-                    title="Heart Rate"
-                    icon={Heart}
-                    data={healthReport.report.vitalSigns?.heartRate}
-                />
-                <VitalSignCard
-                    title="Blood Pressure"
-                    icon={Droplets}
-                    data={healthReport.report.vitalSigns?.bloodPressure}
-                />
-                <VitalSignCard
-                    title="Temperature"
-                    icon={Thermometer}
-                    data={healthReport.report.vitalSigns?.temperature}
-                />
-                <VitalSignCard
-                    title="Oxygen Saturation"
-                    icon={Activity}
-                    data={healthReport.report.vitalSigns?.oxygenSaturation}
-                />
-              </div>
-            </div>
-
-            {/* Risk Assessment */}
-            <div className="risk-assessment">
-              <h2 className="section-title">Risk Assessment</h2>
-              <div className="risk-grid">
-                <div className="risk-item">
-                  <div className="risk-label">Cardiovascular Risk</div>
-                  <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.cardiovascularRisk)}`}>
-                  {healthReport.report.riskAssessment?.cardiovascularRisk || 'N/A'}
-                </span>
-                </div>
-                <div className="risk-item">
-                  <div className="risk-label">Diabetes Risk</div>
-                  <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.diabetesRisk)}`}>
-                  {healthReport.report.riskAssessment?.diabetesRisk || 'N/A'}
-                </span>
-                </div>
-                <div className="risk-item">
-                  <div className="risk-label">Overall Risk</div>
-                  <span className={`risk-badge ${getRiskClass(healthReport.report.riskAssessment?.overallRisk)}`}>
-                  {healthReport.report.riskAssessment?.overallRisk || 'N/A'}
-                </span>
-                </div>
-              </div>
-              {healthReport.report.riskAssessment?.riskFactors && healthReport.report.riskAssessment.riskFactors.length > 0 && (
-                  <div className="risk-factors">
-                    <h4 className="risk-factors-title">Identified Risk Factors:</h4>
-                    <ul className="risk-factors-list">
-                      {healthReport.report.riskAssessment.riskFactors.map((factor, index) => (
-                          <li key={index} className="risk-factor-item">• {factor}</li>
-                      ))}
-                    </ul>
-                  </div>
-              )}
-            </div>
-
-            {/* Alerts */}
-            <div className="alerts-section">
-              <h2 className="section-title">Alerts & Notifications</h2>
-              <div className="alerts-container">
-                <AlertCard
-                    type="Critical"
-                    alerts={healthReport.report.alerts?.critical}
-                    className="alert-critical"
-                    icon={AlertTriangle}
-                />
-                <AlertCard
-                    type="Warnings"
-                    alerts={healthReport.report.alerts?.warnings}
-                    className="alert-warning"
-                    icon={AlertTriangle}
-                />
-                <AlertCard
-                    type="Notifications"
-                    alerts={healthReport.report.alerts?.notifications}
-                    className="alert-info"
-                    icon={CheckCircle}
-                />
-              </div>
-            </div>
-
-            {/* Recommendations */}
-            <div className="recommendations-section">
-              <div className="recommendations-card">
-                <h3 className="card-title">Recommendations</h3>
-                <div className="recommendations-content">
-                  {healthReport.report.recommendations?.immediate && (
-                      <div className="recommendation-group">
-                        <h4 className="recommendation-title immediate">Immediate Actions:</h4>
-                        <ul className="recommendation-list">
-                          {healthReport.report.recommendations.immediate.map((rec, index) => (
-                              <li key={index} className="recommendation-item">• {rec}</li>
-                          ))}
-                        </ul>
-                      </div>
-                  )}
-                  {healthReport.report.recommendations?.lifestyle && (
-                      <div className="recommendation-group">
-                        <h4 className="recommendation-title lifestyle">Lifestyle Changes:</h4>
-                        <ul className="recommendation-list">
-                          {healthReport.report.recommendations.lifestyle.map((rec, index) => (
-                              <li key={index} className="recommendation-item">• {rec}</li>
-                          ))}
-                        </ul>
-                      </div>
-                  )}
-                </div>
-              </div>
-
-              {/*Health Trends*/}
-              {/*<div className="trends-card">*/}
-              {/*  <h3 className="card-title">Health Trends</h3>*/}
-              {/*  <div className="trends-content">*/}
-              {/*    {healthReport.report.trends?.improving && healthReport.report.trends.improving.length > 0 && (*/}
-              {/*        <div className="trend-group">*/}
-              {/*          <h4 className="trend-title improving">*/}
-              {/*            <TrendingUp className="icon" />*/}
-              {/*            Improving:*/}
-              {/*          </h4>*/}
-              {/*          <ul className="trend-list">*/}
-              {/*            {healthReport.report.trends.improving.map((trend, index) => (*/}
-              {/*                <li key={index} className="trend-item">• {trend}</li>*/}
-              {/*            ))}*/}
-              {/*          </ul>*/}
-              {/*        </div>*/}
-              {/*    )}*/}
-              {/*    {healthReport.report.trends?.declining && healthReport.report.trends.declining.length > 0 && (*/}
-              {/*        <div className="trend-group">*/}
-              {/*          <h4 className="trend-title declining">*/}
-              {/*            <TrendingDown className="icon" />*/}
-              {/*            Declining:*/}
-              {/*          </h4>*/}
-              {/*          <ul className="trend-list">*/}
-              {/*            {healthReport.report.trends.declining.map((trend, index) => (*/}
-              {/*                <li key={index} className="trend-item">• {trend}</li>*/}
-              {/*            ))}*/}
-              {/*          </ul>*/}
-              {/*        </div>*/}
-              {/*    )}*/}
-              {/*  </div>*/}
-              {/*</div>*/}
-            </div>
-
-            {/* Disclaimer */}
-            <div className="disclaimer">
-              <p className="disclaimer-text">
-                {healthReport.report.disclaimer}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Report History */}
-        {reportHistory.length > 0 && (
-          <div className="health-card" style={{ marginTop: '30px' }}>
-            <h2><FaHistory /> Previous Reports</h2>
-            {reportHistory.map(historyReport => (
-              <div key={historyReport.id} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '15px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '8px',
-                marginBottom: '10px'
-              }}>
-                <div>
-                  <h4 style={{ margin: '0 0 5px 0', textTransform: 'capitalize' }}>
-                    {historyReport.reportType} Report
-                  </h4>
-                  <p style={{ margin: '0', color: '#777', fontSize: '0.9rem' }}>
-                    Generated: {new Date(historyReport.generatedAt).toLocaleDateString()}
-                  </p>
-                  <p style={{ margin: '5px 0 0 0', color: '#555' }}>
-                    {historyReport.summary}
-                  </p>
-                </div>
-                <button className="btn" style={{ backgroundColor: '#3083ff', color: 'white' }}>
-                  View
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 }
 
 export default HealthReport;

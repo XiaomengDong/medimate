@@ -118,6 +118,7 @@ function AIAssistant() {
           </button>
         </form>
       </div>
+    </div>
   );
 }
 

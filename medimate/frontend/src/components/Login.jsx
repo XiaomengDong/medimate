@@ -8,6 +8,7 @@ function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreed, setAgreed] = useState(false);              // ← New state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,19 +22,15 @@ function Login({ onLogin }) {
     }
 
     setLoading(true);
-
     try {
       const data = await authAPI.login(username.trim(), password);
-      // Store the token
       setToken(data.token);
-      // Call the parent component's onLogin function
       onLogin(data.user, data.token);
-      // Clear form
       setUsername('');
       setPassword('');
-    } catch (error) {
-      console.error('Login error:', error);
-      setError(error.message || 'Login failed');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -43,46 +40,53 @@ function Login({ onLogin }) {
     e.preventDefault();
     setError('');
 
+    // 1) Check required fields
     if (!username || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
 
+    // 2) Password match + strength
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
     }
 
+    // 3) Email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address');
       return;
     }
 
+    // 4) Terms & Conditions agreement
+    if (!agreed) {
+      setError('You must agree to the Terms & Conditions');
+      return;
+    }
+
     setLoading(true);
-
     try {
-      const data = await authAPI.register(username.trim(), email.trim(), password);
-
-      // Store the token
+      const data = await authAPI.register(
+          username.trim(),
+          email.trim(),
+          password
+      );
       setToken(data.token);
-
-      // Call the parent component's onLogin function
       onLogin(data.user, data.token);
-
-      // Clear form
+      // Clear form & agreement
       setUsername('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
-    } catch (error) {
-      console.error('Sign up error:', error);
-      setError(error.message || 'Sign up failed');
+      setAgreed(false);
+    } catch (err) {
+      console.error('Sign up error:', err);
+      setError(err.message || 'Sign up failed');
     } finally {
       setLoading(false);
     }
@@ -90,11 +94,13 @@ function Login({ onLogin }) {
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
+    // Reset everything
     setError('');
     setUsername('');
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    setAgreed(false);
   };
 
   return (
@@ -105,16 +111,22 @@ function Login({ onLogin }) {
         <p>Your AI-Powered Healthcare Companion</p>
         <div className="login-card">
           <h2>{isSignUp ? 'Sign Up for MediMate' : 'Login to MediMate'}</h2>
-          <form className="login-form" onSubmit={isSignUp ? handleSignUp : handleLogin}>
+          <form
+              className="login-form"
+              onSubmit={isSignUp ? handleSignUp : handleLogin}
+          >
             {error && (
-                <div className="error-message" style={{
-                  color: 'red',
-                  marginBottom: '10px',
-                  padding: '8px',
-                  backgroundColor: '#ffe6e6',
-                  border: '1px solid #ff9999',
-                  borderRadius: '4px'
-                }}>
+                <div
+                    className="error-message"
+                    style={{
+                      color: 'red',
+                      marginBottom: '10px',
+                      padding: '8px',
+                      backgroundColor: '#ffe6e6',
+                      border: '1px solid #ff9999',
+                      borderRadius: '4px',
+                    }}
+                >
                   {error}
                 </div>
             )}
@@ -159,21 +171,49 @@ function Login({ onLogin }) {
                 />
             )}
 
-            <button type="submit" disabled={loading}>
+            {isSignUp && (
+                <div style={{ margin: '12px 0', fontSize: '0.5em' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', marginLeft: '-100px', marginTop: '-10px'}}>
+                    <input
+                        type="checkbox"
+                        checked={agreed}
+                        onChange={(e) => setAgreed(e.target.checked)}
+                        disabled={loading}
+                        style={{ marginRight: '-100px', marginTop: '10px' }}
+                    />
+                    I agree to the MediMate Terms and Conditions, and I consent to sharing my data with MediMate AI.
+                  </label>
+                </div>
+            )}
+
+            <button
+                type="submit"
+                disabled={
+                    loading || (isSignUp && !agreed)
+                }
+            >
               {loading
-                  ? (isSignUp ? 'Creating Account...' : 'Logging in...')
-                  : (isSignUp ? 'Sign Up' : 'Login')
-              }
+                  ? isSignUp
+                      ? 'Creating Account...'
+                      : 'Logging in...'
+                  : isSignUp
+                      ? 'Sign Up'
+                      : 'Login'}
             </button>
           </form>
 
-          <div className="toggle-mode" style={{
-            textAlign: 'center',
-            marginTop: '15px',
-            padding: '10px'
-          }}>
+          <div
+              className="toggle-mode"
+              style={{
+                textAlign: 'center',
+                marginTop: '15px',
+                padding: '10px',
+              }}
+          >
           <span style={{ color: '#666' }}>
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            {isSignUp
+                ? 'Already have an account?'
+                : "Don't have an account?"}
           </span>
             <button
                 type="button"
@@ -186,7 +226,7 @@ function Login({ onLogin }) {
                   textDecoration: 'underline',
                   cursor: 'pointer',
                   marginLeft: '5px',
-                  fontSize: 'inherit'
+                  fontSize: 'inherit',
                 }}
             >
               {isSignUp ? 'Login here' : 'Sign up here'}
